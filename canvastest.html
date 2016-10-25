@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="testCanv"></div>
+
+<style>
+    html, body { width: 100%; height: 100%; padding: 0; margin: 0; }
+    #testCanv { width: 100%; height: 100%; }
+    #hmHighlightCanvas { z-index: 1; }
+</style>
+<script>
+
+function createCanvas(id, width, height, style) {
+    var canv = document.createElement('canvas');
+    canv.id = id;
+    canv.width = width;
+    canv.height = height;
+    canv.style.cssText = style || '';
+    return canv;
+}
+
+function getCoveragePerc(maxWidth, actWidth) {
+    return maxWidth/actWidth;
+}
+
+function HMVertScrollBar(hmBr, width, height) {
+    this.browser = hmBr;
+    this.scrollY = 0;
+    this.width = width;
+    this.height = height;
+    this.scrolling = false;
+    this.startScrollY = 0;
+    this.startScrollOff = 0;
+    this.scrollerHeight = 0;
+    this.scrollerFill = hmBr.settings.defaultScrollerFill;
+    this.scrollerHighlightFill = hmBr.settings.highlightScrollerFill;
+    this.scrollerDefaultFill = hmBr.settings.defaultScrollerFill;
+}
+
+HMVertScrollBar.prototype.init = function() {
+    var hmVertScroll = this;
+    this.scrollYCanv = createCanvas('hmScrollYCanvas', this.width, this.height, 'position: absolute; top: 10px; right: 0');
+    this.browser.parentDiv.appendChild(this.scrollYCanv);
+    this.scrollYCtx = this.scrollYCanv.getContext("2d");
+    this.scrollYCanv.onmousedown = function(e) {
+        var evt = e || event;
+        hmVertScroll.scrolling = true;
+        hmVertScroll.startScrollY = hmVertScroll.scrollY;
+        hmVertScroll.startScrollOff = evt.offsetY;
+    };
+    this.scrollYCanv.onmousemove = function(e) {
+        var evt = e || event;
+        if (hmVertScroll.onScroller(evt)) {
+            if (hmVertScroll.scrollerFill !== hmVertScroll.scrollerHighlightFill) {
+                hmVertScroll.scrollerFill = hmVertScroll.scrollerHighlightFill;
+                hmVertScroll.redraw();
+            }
+        } else {
+            if (hmVertScroll.scrollerFill !== hmVertScroll.scrollerDefaultFill) {
+                hmVertScroll.scrollerFill = hmVertScroll.scrollerDefaultFill;
+                hmVertScroll.redraw();
+            }
+        }
+    };
+    this.scrollYCanv.onmouseout = function(e) {
+        if (hmVertScroll.scrollerFill !== hmVertScroll.scrollerDefaultFill) {
+            hmVertScroll.scrollerFill = hmVertScroll.scrollerDefaultFill;
+            hmVertScroll.redraw();
+        }
+    };
+};
+
+HMVertScrollBar.prototype.onScroller = function(evt) {
+    return evt.offsetY > this.scrollY && evt.offsetY < this.scrollY + this.scrollerHeight;
+};
+
+HMVertScrollBar.prototype.onMouseMove = function(evt) {
+    if (this.scrolling) {
+        var diff = evt.offsetY - this.startScrollOff;
+        this.scrollY = (this.startScrollY + diff < 0)? 0 : (this.startScrollY + diff > this.height - this.scrollerHeight)? this.height - this.scrollerHeight : this.startScrollY + diff;
+        this.scrollerFill = this.scrollerHighlightFill;
+        this.redraw();
+        this.browser.onScrollY(this.scrollY);
+    }
+};
+
+HMVertScrollBar.prototype.onMouseUp = function(evt) {
+    this.scrolling = false;
+    if (this.scrollerFill !== this.scrollerDefaultFill) {
+        this.scrollerFill = this.scrollerDefaultFill;
+        this.redraw();
+    }
+};
+
+HMVertScrollBar.prototype.onWheel = function(evt) {
+    var diff = evt.deltaY;
+    this.scrollY = (this.scrollY + diff < 0)? 0 : (this.scrollY + diff > this.height - this.scrollerHeight)? this.height - this.scrollerHeight : this.scrollY + diff;
+    this.redraw();
+    this.browser.onScrollY(this.scrollY);
+};
+
+HMVertScrollBar.prototype.clear = function() {
+    this.scrollYCtx.clearRect(0, 0, this.scrollYCanv.width, this.scrollYCanv.height);
+};
+
+HMVertScrollBar.prototype.redraw = function() {
+    this.clear();
+    this.render();
+};
+
+HMVertScrollBar.prototype.render = function() {
+    var perc = getCoveragePerc(this.browser.maxHeight, this.browser.numRows * this.browser.settings.cellHeight);
+    this.scrollerHeight = perc * this.height;
+    this.scrollYCtx.fillStyle = this.scrollerFill;
+    this.scrollYCtx.fillRect(0, this.scrollY, this.width, this.scrollerHeight);
+    this.scrollYCtx.stroke();
+};
+
+function HMHorizScrollBar(hmBr, width, height) {
+    this.browser = hmBr;
+    this.scrollX = 0;
+    this.width = width;
+    this.height = height;
+    this.scrolling = false;
+    this.startScrollX = 0;
+    this.startScrollOff = 0;
+    this.scrollerWidth = 0;
+    this.scrollerFill = hmBr.settings.defaultScrollerFill;
+    this.scrollerHighlightFill = hmBr.settings.highlightScrollerFill;
+    this.scrollerDefaultFill = hmBr.settings.defaultScrollerFill;
+}
+
+HMHorizScrollBar.prototype.init = function() {
+    var hmHorizScroll = this;
+    this.scrollXCanv = createCanvas('hmScrollXCanvas', this.width, this.height, 'position: absolute; bottom: 0; left: 10px');
+    this.browser.parentDiv.appendChild(this.scrollXCanv);
+    this.scrollXCtx = this.scrollXCanv.getContext("2d");
+    this.scrollXCanv.onmousedown = function(e) {
+        var evt = e || event;
+        hmHorizScroll.scrolling = true;
+        hmHorizScroll.startScrollX = hmHorizScroll.scrollX;
+        hmHorizScroll.startScrollOff = evt.offsetX;
+    };
+    this.scrollXCanv.onmousemove = function(e) {
+        var evt = e || event;
+        if (hmHorizScroll.onScroller(evt)) {
+            if (hmHorizScroll.scrollerFill !== hmHorizScroll.scrollerHighlightFill) {
+                hmHorizScroll.scrollerFill = hmHorizScroll.scrollerHighlightFill;
+                hmHorizScroll.redraw();
+            }
+        } else {
+            if (hmHorizScroll.scrollerFill !== hmHorizScroll.scrollerDefaultFill) {
+                hmHorizScroll.scrollerFill = hmHorizScroll.scrollerDefaultFill;
+                hmHorizScroll.redraw();
+            }
+        }
+    };
+    this.scrollXCanv.onmouseout = function(e) {
+        if (hmHorizScroll.scrollerFill !== hmHorizScroll.scrollerDefaultFill) {
+            hmHorizScroll.scrollerFill = hmHorizScroll.scrollerDefaultFill;
+            hmHorizScroll.redraw();
+        }
+    };
+};
+
+HMHorizScrollBar.prototype.onScroller = function(evt) {
+    return evt.offsetX > this.scrollX && evt.offsetX < this.scrollX + this.scrollerWidth;
+};
+
+HMHorizScrollBar.prototype.onMouseMove = function(evt) {
+    if (this.scrolling) {
+        var diff = evt.offsetX - this.startScrollOff;
+        this.scrollX = (this.startScrollX + diff < 0)? 0 : (this.startScrollX + diff > this.width - this.scrollerWidth)? this.width - this.scrollerWidth : this.startScrollX + diff;
+        this.scrollerFill = this.scrollerHighlightFill;
+        this.redraw();
+        this.browser.onScrollX(this.scrollX);
+    }
+};
+
+HMHorizScrollBar.prototype.onMouseUp = function(evt) {
+    this.scrolling = false;
+    if (this.scrollerFill !== this.scrollerDefaultFill) {
+        this.scrollerFill = this.scrollerDefaultFill;
+        this.redraw();
+    }
+};
+
+HMHorizScrollBar.prototype.onWheel = function(evt) {
+    var diff = evt.deltaY;
+    this.scrollX = (this.scrollX + diff < 0)? 0 : (this.scrollX + diff > this.width - this.scrollerWidth)? this.width - this.scrollerWidth : this.scrollX + diff;
+    this.redraw();
+    this.browser.onScrollX(this.scrollX);
+};
+
+HMHorizScrollBar.prototype.clear = function() {
+    this.scrollXCtx.clearRect(0, 0, this.scrollXCanv.width, this.scrollXCanv.height);
+};
+
+HMHorizScrollBar.prototype.redraw = function() {
+    this.clear();
+    this.render();
+};
+
+HMHorizScrollBar.prototype.render = function() {
+    var perc = getCoveragePerc(this.browser.maxWidth, this.browser.numCols * this.browser.settings.cellWidth);
+    this.scrollerWidth = perc * this.width;
+    this.scrollXCtx.fillStyle = this.scrollerFill;
+    this.scrollXCtx.fillRect(this.scrollX, 0, this.scrollerWidth, this.height);
+    this.scrollXCtx.stroke();
+};
+
+function HMHeatmap(hmBr, width, height, data, numRows, numCols) {
+    this.browser = hmBr;
+    this.scrollX = 0;
+    this.scrollY = 0;
+    this.width = width;
+    this.height = height;
+    this.data = data;
+    this.numRows = numRows;
+    this.numCols = numCols;
+}
+
+HMHeatmap.prototype.init = function() {
+    var HMHeat = this;
+    this.canv = createCanvas('hmCanvas', this.width, this.height, 'position: absolute; top: 10px; left: 10px');
+    this.highlightCanv = createCanvas('hmHighlightCanvas', this.width, this.height, 'position: absolute; top: 10px; left: 10px');
+    this.browser.parentDiv.appendChild(this.canv);
+    this.browser.parentDiv.appendChild(this.highlightCanv);
+    this.ctx = this.canv.getContext("2d");
+    this.highlightCtx = this.highlightCanv.getContext("2d");
+    this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
+    this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
+    this.highlightCanv.onmousemove = function(e) {
+        var evt = e || event;
+        HMHeat.highlightCell(evt.offsetX, evt.offsetY);
+    };
+};
+
+HMHeatmap.prototype.highlightCell = function(x, y) {
+    var cw = this.browser.settings.cellWidth;
+    var ch = this.browser.settings.cellHeight;
+    
+    var j = Math.floor(x/cw);
+    var i = Math.floor(y/ch);
+    
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.highlightCtx.strokeRect((this.browser.settings.cellWidth*j)-this.scrollX, (this.browser.settings.cellHeight*i)-this.scrollY, this.browser.settings.cellWidth, this.browser.settings.cellHeight);
+};
+
+HMHeatmap.prototype.clear = function() {
+    this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+};
+
+HMHeatmap.prototype.onScrollX = function(scrollX) {
+    this.scrollX = scrollX;
+    this.redraw();
+};
+
+HMHeatmap.prototype.onScrollY = function(scrollY) {
+    this.scrollY = scrollY;
+    this.redraw();
+};
+
+HMHeatmap.prototype.render = function() {
+    for(var i = 0; i < this.numRows; ++i) {
+        for(var j = 0; j < this.numCols; ++j) {
+            if (this.browser.inVisibleArea(i, j)) {
+                this.ctx.fillStyle= this.data[i][j];
+                this.ctx.fillRect((this.browser.settings.cellWidth*j)-this.scrollX, (this.browser.settings.cellHeight*i)-this.scrollY, this.browser.settings.cellWidth, this.browser.settings.cellHeight);
+            }
+        }
+    }
+    this.ctx.stroke();
+};
+
+HMHeatmap.prototype.redraw = function() {
+    this.clear();
+    this.render();
+};
+
+function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
+    this.parentDiv = parentDiv;
+    this.maxWidth = parentDiv.clientWidth;
+    this.maxHeight = parentDiv.clientHeight;
+    this.rowHeaders = rowHeaders;
+    this.numRows = rowHeaders.length;
+    this.colHeaders = colHeaders;
+    this.numCols = colHeaders.length;
+    this.data = data;
+    this.zoom = 1.0;
+    this.scrollX = 0;
+    this.scrollY = 0;
+    this.scrollingX = false;
+    this.scrollingY = false;
+    this.settings = settings || { cellWidth: 10, cellHeight: 10, vertScrollWidth: 10, horizScrollHeight: 10, defaultScrollerFill: '#CCC', highlightScrollerFill: '#999', highlightCellColor: '#CC0000', highlightCellLineWidth: 3 };
+}
+
+HMBrowser.prototype.init = function() {
+    var hmBr = this;
+    this.colHeaderCanv = createCanvas('hmColHeadCanvas', this.maxWidth, 10, 'position: absolute; top: 0');
+    this.parentDiv.appendChild(this.colHeaderCanv);
+    this.colHeaderCtx = this.colHeaderCanv.getContext("2d");
+    
+    this.rowHeaderCanv = createCanvas('hmRowHeadCanvas', 10, this.maxHeight, 'position: absolute; left: 0');
+    this.parentDiv.appendChild(this.rowHeaderCanv);
+    this.rowHeaderCtx = this.rowHeaderCanv.getContext("2d");
+    
+    this.heatmap = new HMHeatmap(this, this.maxWidth - 20, this.maxHeight - 20, this.data, this.numRows, this.numCols);
+    this.heatmap.init();
+    
+    this.vertScroll = new HMVertScrollBar(this, this.settings.vertScrollWidth, this.maxHeight - 20);
+    this.horizScroll = new HMHorizScrollBar(this, this.maxWidth - 20, this.settings.horizScrollHeight);
+    this.vertScroll.init();
+    this.horizScroll.init();
+
+    window.onmousemove = function(e) {
+        var evt = e || event;
+        hmBr.vertScroll.onMouseMove(evt);
+        hmBr.horizScroll.onMouseMove(evt);
+    };
+    window.onmouseup = function(e) {
+        var evt = e || event;
+        hmBr.vertScroll.onMouseUp(evt);
+        hmBr.horizScroll.onMouseUp(evt);
+    };
+    this.parentDiv.onwheel = function(e) {
+        var evt = e || event;
+        if (evt.shiftKey) {
+            hmBr.horizScroll.onWheel(evt);
+        } else {
+            hmBr.vertScroll.onWheel(evt);
+        }
+    };
+};
+
+HMBrowser.prototype.onScrollY = function(scrollY) {
+    this.scrollY = scrollY;
+    this.heatmap.onScrollY(scrollY);
+};
+
+HMBrowser.prototype.onScrollX = function(scrollX) {
+    this.scrollX = scrollX;
+    this.heatmap.onScrollX(scrollX);
+};
+
+HMBrowser.prototype.inVisibleArea = function(i, j) {
+    var box = { top: i * this.settings.cellHeight, left: j * this.settings.cellWidth, right: j * this.settings.cellWidth + this.settings.cellWidth, top: i * this.settings.cellHeight + this.settings.cellHeight };
+    var boxWin = { top: this.scrollY, left: this.scrollX, right: this.scrollX + this.maxWidth, bottom: this.scrollY + this.maxHeight };
+    return  !(box.right < boxWin.left || box.left > boxWin.right || box.bottom < boxWin.top || box.top > boxWin.bottom);
+}
+
+HMBrowser.prototype.render = function() {
+    this.heatmap.render();
+    this.vertScroll.render();
+    this.horizScroll.render();
+};
+
+var rowHeads = [];
+for(var i = 0; i < 4000; ++i) { rowHeads.push(i); }
+
+var colHeads = [];
+for(var i = 0; i < 300; ++i) { colHeads.push(i); }
+
+var data = [];
+for(var i = 0; i < 4000; ++i) {
+    row = [];
+    for(var j = 0; j < 300; ++j) {
+        var r = Math.floor((Math.random() * 255));
+        var g = Math.floor((Math.random() * 255));
+        var b = Math.floor((Math.random() * 255));
+        row.push('rgb(' + r + ',' + g + ',' + b + ')');
+    }
+    data.push(row);
+}
+
+var br = new HMBrowser(document.getElementById('testCanv'), rowHeads, colHeads, data);
+br.init();
+br.render();
+
+</script>
+
+</body>
+</html>
+

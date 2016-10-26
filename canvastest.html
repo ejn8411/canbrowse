@@ -4,10 +4,10 @@
 <div id="testCanv"></div>
 
 <style>
-    html, body { width: 100%; height: 100%; padding: 0; margin: 0; }
+    html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; }
     #testCanv { width: 100%; height: 100%; }
     #hmHighlightCanvas { z-index: 1; }
-    #hmTextOverflowCover { z-index: 1; background-color: #FFF; }
+    #hmTextOverflowCover1, #hmTextOverflowCover2, #hmTextOverflowCover3 { z-index: 1; background-color: #FFF; }
 </style>
 <script>
 
@@ -111,7 +111,8 @@ HMVertScrollBar.prototype.redraw = function() {
 };
 
 HMVertScrollBar.prototype.render = function() {
-    var perc = getCoveragePerc(this.browser.maxHeight, this.browser.numRows * this.browser.settings.cellHeight);
+    var hmHeight = this.browser.getHeatmapHeight();
+    var perc = getCoveragePerc(hmHeight, this.browser.numRows * this.browser.settings.cellHeight);
     this.scrollerHeight = perc * this.height;
     this.scrollYCtx.fillStyle = this.scrollerFill;
     this.scrollYCtx.fillRect(0, this.scrollY, this.width, this.scrollerHeight);
@@ -492,7 +493,7 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.scrollY = 0;
     this.scrollingX = false;
     this.scrollingY = false;
-    this.settings = settings || { cellWidth: 10, cellHeight: 10, vertScrollWidth: 10, horizScrollHeight: 10, defaultScrollerFill: '#CCC', highlightScrollerFill: '#999', highlightCellColor: '#CC0000', highlightCellLineWidth: 3 };
+    this.settings = settings || { cellWidth: 10, cellHeight: 10, vertScrollWidth: 10, horizScrollHeight: 10, defaultScrollerFill: '#CCC', highlightScrollerFill: '#999', highlightCellColor: '#CC0000', highlightCellLineWidth: 1 };
 }
 
 HMBrowser.prototype.init = function() {
@@ -506,9 +507,12 @@ HMBrowser.prototype.init = function() {
     this.rowHeads.init();
     
     this.hmTL = { top: this.colHeads.height, left: this.rowHeads.width };
-    var textOvrCanv = createCanvas('hmTextOverflowCover', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
+    var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
-    
+    var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.settings.horizScrollHeight, 'position: absolute; bottom: 0; left: 0;');
+    this.parentDiv.appendChild(textOvrCanv);
+    var textOvrCanv = createCanvas('hmTextOverflowCover3', this.settings.vertScrollWidth, this.hmTL.top, 'position: absolute; top: 0; right: 0;');
+    this.parentDiv.appendChild(textOvrCanv);
     
     this.heatmap = new HMHeatmap(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.data, this.numRows, this.numCols, this.hmTL);
     
@@ -540,7 +544,17 @@ HMBrowser.prototype.init = function() {
     };
 };
 
+HMBrowser.prototype.getHeatmapHeight = function() {
+    return this.maxHeight - this.hmTL.top - this.settings.horizScrollHeight;
+};
+
+HMBrowser.prototype.getHeatmapWidth = function() {
+    return this.maxWidth - this.hmTL.left - this.settings.vertScrollWidth;
+};
+
 HMBrowser.prototype.onScrollY = function(scrollY) {
+    // Convert to scroll in terms of heatmap
+    scrollY = scrollY * this.settings.cellHeight;
     this.scrollY = scrollY;
     this.heatmap.onScrollY(scrollY);
     this.colHeads.onScrollY(scrollY);
@@ -575,8 +589,15 @@ HMBrowser.prototype.render = function() {
     this.horizScroll.render();
 };
 
+function pad(n, width, z) {
+    z = z || '0';
+    n = n + '';
+    return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
 var rowHeads = [];
-for(var i = 0; i < 4000; ++i) { rowHeads.push(i); }
+for(var i = 0; i < 4000; ++i) { rowHeads.push('Rv' + pad(i, 4)); }
+//for(var i = 0; i < 4000; ++i) { rowHeads.push(i); }
 
 var colHeads = [];
 for(var i = 0; i < 300; ++i) { colHeads.push(i); }

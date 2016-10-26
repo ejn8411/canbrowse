@@ -206,7 +206,8 @@ HMHorizScrollBar.prototype.redraw = function() {
 };
 
 HMHorizScrollBar.prototype.render = function() {
-    var perc = getCoveragePerc(this.browser.maxWidth, this.browser.numCols * this.browser.settings.cellWidth);
+    var hmWidth = this.browser.getHeatmapWidth();
+    var perc = getCoveragePerc(hmWidth, this.browser.numCols * this.browser.settings.cellWidth);
     this.scrollerWidth = perc * this.width;
     this.scrollXCtx.fillStyle = this.scrollerFill;
     this.scrollXCtx.fillRect(this.scrollX, 0, this.scrollerWidth, this.height);
@@ -426,7 +427,7 @@ HMRowHeaders.prototype.init = function() {
 HMRowHeaders.prototype.getMaxWidth = function(textArr, ctx) {
     var w = 0;
     for(var i = 0; i < textArr.length; ++i) {
-        w = Math.max(ctx.measureText(textArr[i]).width, w);
+        w = Math.max(ctx.measureText(textArr[i]).width + (2*this.browser.settings.labelTextPadding), w);
     }
     return w;
 };
@@ -434,7 +435,7 @@ HMRowHeaders.prototype.getMaxWidth = function(textArr, ctx) {
 HMRowHeaders.prototype.render = function() {
     this.rowHeaderCtx.textBaseline = 'top';
     for(var i = 0; i < this.rowHeaders.length; ++i) {
-        this.rowHeaderCtx.fillText(this.rowHeaders[i], 0, i*this.browser.settings.cellHeight +  this.browser.hmTL.top - this.scrollY);
+        this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*this.browser.settings.cellHeight +  this.browser.hmTL.top - this.scrollY);
     }
 };
 
@@ -493,7 +494,15 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.scrollY = 0;
     this.scrollingX = false;
     this.scrollingY = false;
-    this.settings = settings || { cellWidth: 10, cellHeight: 10, vertScrollWidth: 10, horizScrollHeight: 10, defaultScrollerFill: '#CCC', highlightScrollerFill: '#999', highlightCellColor: '#CC0000', highlightCellLineWidth: 1 };
+    this.settings = settings || { labelTextPadding: 2,
+                                  cellWidth: 10, 
+                                  cellHeight: 10, 
+                                  vertScrollWidth: 10, 
+                                  horizScrollHeight: 10, 
+                                  defaultScrollerFill: '#CCC', 
+                                  highlightScrollerFill: '#999', 
+                                  highlightCellColor: '#CC0000', 
+                                  highlightCellLineWidth: 1 };
 }
 
 HMBrowser.prototype.init = function() {
@@ -516,8 +525,8 @@ HMBrowser.prototype.init = function() {
     
     this.heatmap = new HMHeatmap(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.data, this.numRows, this.numCols, this.hmTL);
     
-    this.vertScroll = new HMVertScrollBar(this, this.settings.vertScrollWidth, this.maxHeight - this.rowHeads.width - this.settings.vertScrollWidth, this.hmTL);
-    this.horizScroll = new HMHorizScrollBar(this, this.maxWidth - this.colHeads.height - this.settings.horizScrollHeight, this.settings.horizScrollHeight, this.hmTL);
+    this.vertScroll = new HMVertScrollBar(this, this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.hmTL);
+    this.horizScroll = new HMHorizScrollBar(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.settings.horizScrollHeight, this.hmTL);
 
     // Init the other components
     this.heatmap.init();
@@ -554,7 +563,11 @@ HMBrowser.prototype.getHeatmapWidth = function() {
 
 HMBrowser.prototype.onScrollY = function(scrollY) {
     // Convert to scroll in terms of heatmap
-    scrollY = scrollY * this.settings.cellHeight;
+    var wholeMapHeight = this.settings.cellHeight * this.zoom * this.numRows;
+    var convRatio = wholeMapHeight/this.vertScroll.height;
+    scrollY = scrollY * convRatio;
+    
+    // Update components
     this.scrollY = scrollY;
     this.heatmap.onScrollY(scrollY);
     this.colHeads.onScrollY(scrollY);
@@ -562,6 +575,12 @@ HMBrowser.prototype.onScrollY = function(scrollY) {
 };
 
 HMBrowser.prototype.onScrollX = function(scrollX) {
+    // Convert to scroll in terms of heatmap
+    var wholeMapWidth = this.settings.cellWidth * this.zoom * this.numCols;
+    var convRatio = wholeMapWidth/this.horizScroll.width;
+    scrollX = scrollX * convRatio;
+
+    // Update components
     this.scrollX = scrollX;
     this.heatmap.onScrollX(scrollX);
     this.colHeads.onScrollX(scrollX);

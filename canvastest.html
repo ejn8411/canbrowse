@@ -340,21 +340,22 @@ HMColHeaders.prototype.init = function() {
 HMColHeaders.prototype.getMaxWidth = function(textArr, ctx) {
     var w = 0;
     for(var i = 0; i < textArr.length; ++i) {
-        w = Math.max(ctx.measureText(textArr[i]).width, w);
+        w = Math.max(ctx.measureText(textArr[i]).width + (2*this.browser.settings.labelTextPadding), w);
     }
     return w;
 };
 
 HMColHeaders.prototype.render = function() {
+    var cw = this.browser.settings.cellWidth * this.browser.zoom;
     // Somewhat hard to understand, but we have to esentially rotate the whole context/coord system
     // for every label we are rendering in order to get rotated text
     for(var i = 0; i < this.colHeaders.length; ++i) {
         this.colHeaderCtx.save();
-        this.colHeaderCtx.translate(i*this.browser.settings.cellWidth + this.browser.hmTL.left - this.scrollX, this.height/2);
+        this.colHeaderCtx.translate(i*cw + this.browser.hmTL.left - this.scrollX, this.height/2);
         this.colHeaderCtx.rotate(-Math.PI/2);
         this.colHeaderCtx.textAlign = 'center';
         this.colHeaderCtx.textBaseline = 'top';
-        this.colHeaderCtx.fillText(this.colHeaders[i], 0, 0);
+        this.colHeaderCtx.fillText(this.colHeaders[i], this.browser.settings.labelTextPadding/2, 0);
         this.colHeaderCtx.restore();
     }
 };
@@ -433,9 +434,10 @@ HMRowHeaders.prototype.getMaxWidth = function(textArr, ctx) {
 };
 
 HMRowHeaders.prototype.render = function() {
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
     this.rowHeaderCtx.textBaseline = 'top';
     for(var i = 0; i < this.rowHeaders.length; ++i) {
-        this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*this.browser.settings.cellHeight +  this.browser.hmTL.top - this.scrollY);
+        this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*ch +  this.browser.hmTL.top - this.scrollY);
     }
 };
 
@@ -625,18 +627,11 @@ var data = [];
 for(var i = 0; i < 4000; ++i) {
     row = [];
     for(var j = 0; j < 300; ++j) {
-        var rand = Math.random();
-        var r = Math.floor((Math.random() * 255));
-        var g = Math.floor((Math.random() * 255));
-        var b = Math.floor((Math.random() * 255));
-        if (rand <= 0.5) {
-            rand = rand * 2;
-            var rg = Math.floor((rand * 255));
-            row.push('rgb(' + rg + ',' + rg + ', 255)');
+        var rand = (Math.random() * 2) - 1;
+        if (rand < 0) {
+            row.push('rgb(' + Math.floor((1+rand)*255) + ',' + Math.floor((1+rand)*255) + ', 255)');
         } else {
-            rand = rand/2;
-            var b = Math.floor((rand * 255));
-            row.push('rgb(255, 255,' + b + ')');
+            row.push('rgb(255,255,' + Math.floor((1 - rand)*255) + ')');
         }
     }
     data.push(row);

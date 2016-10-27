@@ -397,6 +397,12 @@ HMColHeaders.prototype.highlightHeader = function(i, j) {
     this.highlightCtx.stroke();
 };
 
+HMColHeaders.prototype.setWidth = function(width) {
+    this.width = width;
+    this.colHeaderCanv.width = width;
+    this.highlightCanv.width = width;
+};
+
 HMColHeaders.prototype.onScrollX = function(scrollX) {
     this.scrollX = scrollX;
     this.redraw();
@@ -477,6 +483,12 @@ HMRowHeaders.prototype.redraw = function() {
     this.render();
 };
 
+HMRowHeaders.prototype.setHeight = function(height) {
+    this.height = height;
+    this.rowHeaderCanv.height = height;
+    this.highlightCanv.height = height;
+};
+
 HMRowHeaders.prototype.onScrollX = function(scrollX) {
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
 };
@@ -493,7 +505,9 @@ HMRowHeaders.prototype.onHighlightCell = function(i, j) {
 function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.parentDiv = parentDiv;
     this.maxWidth = parentDiv.clientWidth;
+    this.width = this.maxWidth;
     this.maxHeight = parentDiv.clientHeight;
+    this.height = this.maxHeight;
     this.rowHeaders = rowHeaders;
     this.numRows = rowHeaders.length;
     this.colHeaders = colHeaders;
@@ -504,6 +518,8 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.scrollY = 0;
     this.scrollingX = false;
     this.scrollingY = false;
+    this.needsHorizScroll = false;
+    this.needsVertScroll = false;
     this.settings = settings || { labelTextPadding: 2,
                                   cellWidth: 10, 
                                   cellHeight: 10, 
@@ -517,9 +533,9 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
 
 HMBrowser.prototype.init = function() {
     var hmBr = this;
-    
-    this.colHeads = new HMColHeaders(this, this.maxWidth, this.settings.cellHeight, this.colHeaders);
-    this.rowHeads = new HMRowHeaders(this, this.settings.cellWidth, this.maxHeight, this.rowHeaders);
+
+    this.colHeads = new HMColHeaders(this, this.width, this.settings.cellHeight, this.colHeaders);
+    this.rowHeads = new HMRowHeaders(this, this.settings.cellWidth, this.height, this.rowHeaders);
     
     // Must init here in order to get the correct sizes for the text in the headers
     this.colHeads.init();
@@ -527,12 +543,27 @@ HMBrowser.prototype.init = function() {
     
     this.hmTL = { top: this.colHeads.height, left: this.rowHeads.width };
     
-    // Do we need scroll bars?
-    this.vertScroll = new HMVertScrollBar(this, this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.hmTL);
-    this.horizScroll = new HMHorizScrollBar(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.settings.horizScrollHeight, this.hmTL);
+    this.width = (this.numCols * this.settings.cellWidth * this.zoom) + this.hmTL.left;
+    if (this.width > this.maxWidth) {
+        this.needsHorizScroll = true;
+        this.width = this.maxWidth;
+    }
     
-    this.vertScroll.width = this.vertScroll.needsScroller() ? this.settings.vertScrollWidth : 0;
-    this.horizScroll.height = this.horizScroll.needsScroller() ? this.settings.horizScrollHeight : 0;
+    this.height = (this.numRows * this.settings.cellHeight * this.zoom) + this.hmTL.top
+    if (this.height > this.maxHeight) {
+        this.needsVertScroll = true;
+        this.height = this.maxHeight;
+    }
+    
+    var vertScrollWidth = this.needsVertScroll ? this.settings.vertScrollWidth : 0;
+    var vertScrollHeight = this.needsHorizScroll ? (this.height - this.colHeads.height - this.settings.horizScrollHeight) : this.height - this.colHeads.height;
+    this.vertScroll = new HMVertScrollBar(this, vertScrollWidth, vertScrollHeight, this.hmTL);
+    var horizScrollHeight = this.needsHorizScroll ? this.settings.horizScrollHeight : 0;
+    var horizScrollWidth = this.needsVertScroll ? (this.width - this.rowHeads.width - this.settings.vertScrollWidth) : this.height - this.colHeads.height;
+    this.horizScroll = new HMHorizScrollBar(this, horizScrollWidth, horizScrollHeight, this.hmTL);
+    
+    this.colHeads.setWidth(horizScrollWidth + this.rowHeads.width);
+    this.rowHeads.setHeight(vertScrollHeight + this.colHeads.height);
     
     var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
@@ -542,7 +573,7 @@ HMBrowser.prototype.init = function() {
     this.parentDiv.appendChild(textOvrCanv);
     
     
-    this.heatmap = new HMHeatmap(this, this.maxWidth - this.rowHeads.width - this.vertScroll.width, this.maxHeight - this.colHeads.height - this.horizScroll.height, this.data, this.numRows, this.numCols, this.hmTL);
+    this.heatmap = new HMHeatmap(this, this.width - this.rowHeads.width - this.vertScroll.width, this.height - this.colHeads.height - this.horizScroll.height, this.data, this.numRows, this.numCols, this.hmTL);
 
     // Init the other components
     this.heatmap.init();
@@ -570,11 +601,13 @@ HMBrowser.prototype.init = function() {
 };
 
 HMBrowser.prototype.getHeatmapHeight = function() {
-    return this.maxHeight - this.hmTL.top - this.settings.horizScrollHeight;
+    var extra = this.needsHorizScroll ? this.settings.horizScrollHeight : 0;
+    return this.maxHeight - this.hmTL.top - extra;
 };
 
 HMBrowser.prototype.getHeatmapWidth = function() {
-    return this.maxWidth - this.hmTL.left - this.settings.vertScrollWidth;
+    var extra = this.needsVertScroll ? this.settings.vertScrollWidth : 0;
+    return this.maxWidth - this.hmTL.left - extra;
 };
 
 HMBrowser.prototype.onScrollY = function(scrollY) {
@@ -611,8 +644,8 @@ HMBrowser.prototype.onHighlightCell = function(i, j) {
 HMBrowser.prototype.inVisibleArea = function(i, j) {
     var cw = this.settings.cellWidth * this.zoom;
     var ch = this.settings.cellHeight * this.zoom;
-    var box = { top: i * ch, left: j * cw, right: j * cw + cw, top: i * ch + ch };
-    var boxWin = { top: this.scrollY, left: this.scrollX, right: this.scrollX + this.maxWidth, bottom: this.scrollY + this.maxHeight };
+    var box = { top: i * ch, left: j * cw, right: j * cw + cw, bottom: i * ch + ch };
+    var boxWin = { top: this.scrollY, left: this.scrollX, right: this.scrollX + this.width, bottom: this.scrollY + this.height };
     return  !(box.right < boxWin.left || box.left > boxWin.right || box.bottom < boxWin.top || box.top > boxWin.bottom);
 }
 
@@ -630,17 +663,20 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
+var numrows = 4000;
+var numcols = 10;
+
 var rowHeads = [];
-for(var i = 0; i < 4000; ++i) { rowHeads.push('Rv' + pad(i, 4)); }
+for(var i = 0; i < numrows; ++i) { rowHeads.push('Rv' + pad(i, 4)); }
 //for(var i = 0; i < 4000; ++i) { rowHeads.push(i); }
 
 var colHeads = [];
-for(var i = 0; i < 300; ++i) { colHeads.push(i); }
+for(var i = 0; i < numcols; ++i) { colHeads.push(i); }
 
 var data = [];
-for(var i = 0; i < 4000; ++i) {
+for(var i = 0; i < numrows; ++i) {
     row = [];
-    for(var j = 0; j < 300; ++j) {
+    for(var j = 0; j < numcols; ++j) {
         var rand = (Math.random() * 2) - 1;
         if (rand < 0) {
             row.push('rgb(' + Math.floor((1+rand)*255) + ',' + Math.floor((1+rand)*255) + ', 255)');

@@ -112,7 +112,7 @@ HMVertScrollBar.prototype.redraw = function() {
 
 HMVertScrollBar.prototype.render = function() {
     var hmHeight = this.browser.getHeatmapHeight();
-    var perc = getCoveragePerc(hmHeight, this.browser.numRows * this.browser.settings.cellHeight);
+    var perc = getCoveragePerc(hmHeight, this.browser.numRows * this.browser.settings.cellHeight * this.browser.zoom);
     this.scrollerHeight = perc * this.height;
     this.scrollYCtx.fillStyle = this.scrollerFill;
     this.scrollYCtx.fillRect(0, this.scrollY, this.width, this.scrollerHeight);
@@ -207,7 +207,7 @@ HMHorizScrollBar.prototype.redraw = function() {
 
 HMHorizScrollBar.prototype.render = function() {
     var hmWidth = this.browser.getHeatmapWidth();
-    var perc = getCoveragePerc(hmWidth, this.browser.numCols * this.browser.settings.cellWidth);
+    var perc = getCoveragePerc(hmWidth, this.browser.numCols * this.browser.settings.cellWidth * this.browser.zoom);
     this.scrollerWidth = perc * this.width;
     this.scrollXCtx.fillStyle = this.scrollerFill;
     this.scrollXCtx.fillRect(this.scrollX, 0, this.scrollerWidth, this.height);
@@ -491,7 +491,7 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.colHeaders = colHeaders;
     this.numCols = colHeaders.length;
     this.data = data;
-    this.zoom = 1.0;
+    this.zoom = 0.01;
     this.scrollX = 0;
     this.scrollY = 0;
     this.scrollingX = false;

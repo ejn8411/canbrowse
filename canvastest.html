@@ -72,6 +72,10 @@ HMVertScrollBar.prototype.init = function() {
     };
 };
 
+HMVertScrollBar.prototype.needsScroller = function() {
+    return this.browser.numRows * this.browser.settings.cellHeight * this.browser.zoom > this.browser.getHeatmapHeight();
+};
+
 HMVertScrollBar.prototype.onScroller = function(evt) {
     return evt.offsetY > this.scrollY && evt.offsetY < this.scrollY + this.scrollerHeight;
 };
@@ -165,6 +169,10 @@ HMHorizScrollBar.prototype.init = function() {
             hmHorizScroll.redraw();
         }
     };
+};
+
+HMHorizScrollBar.prototype.needsScroller = function() {
+    return this.browser.numCols * this.browser.settings.cellWidth * this.browser.zoom > this.browser.getHeatmapWidth();
 };
 
 HMHorizScrollBar.prototype.onScroller = function(evt) {
@@ -491,7 +499,7 @@ function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
     this.colHeaders = colHeaders;
     this.numCols = colHeaders.length;
     this.data = data;
-    this.zoom = 0.01;
+    this.zoom = 1.0;
     this.scrollX = 0;
     this.scrollY = 0;
     this.scrollingX = false;
@@ -518,17 +526,23 @@ HMBrowser.prototype.init = function() {
     this.rowHeads.init();
     
     this.hmTL = { top: this.colHeads.height, left: this.rowHeads.width };
-    var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
-    this.parentDiv.appendChild(textOvrCanv);
-    var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.settings.horizScrollHeight, 'position: absolute; bottom: 0; left: 0;');
-    this.parentDiv.appendChild(textOvrCanv);
-    var textOvrCanv = createCanvas('hmTextOverflowCover3', this.settings.vertScrollWidth, this.hmTL.top, 'position: absolute; top: 0; right: 0;');
-    this.parentDiv.appendChild(textOvrCanv);
     
-    this.heatmap = new HMHeatmap(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.data, this.numRows, this.numCols, this.hmTL);
-    
+    // Do we need scroll bars?
     this.vertScroll = new HMVertScrollBar(this, this.settings.vertScrollWidth, this.maxHeight - this.colHeads.height - this.settings.horizScrollHeight, this.hmTL);
     this.horizScroll = new HMHorizScrollBar(this, this.maxWidth - this.rowHeads.width - this.settings.vertScrollWidth, this.settings.horizScrollHeight, this.hmTL);
+    
+    this.vertScroll.width = this.vertScroll.needsScroller() ? this.settings.vertScrollWidth : 0;
+    this.horizScroll.height = this.horizScroll.needsScroller() ? this.settings.horizScrollHeight : 0;
+    
+    var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
+    this.parentDiv.appendChild(textOvrCanv);
+    var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.horizScroll.height, 'position: absolute; bottom: 0; left: 0;');
+    this.parentDiv.appendChild(textOvrCanv);
+    var textOvrCanv = createCanvas('hmTextOverflowCover3', this.vertScroll.width, this.hmTL.top, 'position: absolute; top: 0; right: 0;');
+    this.parentDiv.appendChild(textOvrCanv);
+    
+    
+    this.heatmap = new HMHeatmap(this, this.maxWidth - this.rowHeads.width - this.vertScroll.width, this.maxHeight - this.colHeads.height - this.horizScroll.height, this.data, this.numRows, this.numCols, this.hmTL);
 
     // Init the other components
     this.heatmap.init();

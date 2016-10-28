@@ -5,7 +5,8 @@
 <div id="browseToolbar">
   <small>Search: </small><input type="text" name="searchQuery" onchange="br.searchRows(this.value);" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
   <small>Filter: </small><input type="text" name="filterQuery">
-  <small>Zoom: </small><button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>
+  <small>Zoom: </small><input id="zoomRange" type="range" value="1.0" oninput="br.zoomExact(this.value);" min="0.01" max="10" step="0.01"/><button type="button" onclick="document.getElementById('zoomRange').value = 1.0; br.zoomExact(1.0)">Default</button>
+  <!--<button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>-->
 </div>
 <div id="testCanv">
   <div id="canvToolTip">
@@ -627,7 +628,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
     this.colHeaders = colHeaders;
     this.numCols = colHeaders.length;
     this.data = data;
-    this.zoom = 3.7;
+    this.zoom = 1.0;
     this.scrollX = 0;
     this.scrollY = 0;
     this.scrollingX = false;

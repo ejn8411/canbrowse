@@ -5,14 +5,30 @@
 <div id="browseToolbar">
   <small>Search: </small><input type="text" name="searchQuery" onchange="br.searchRows(this.value);" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
   <small>Filter: </small><input type="text" name="filterQuery">
-  <small>Zoom: </small><input type="text" name="filterQuery"><button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>
+  <small>Zoom: </small><button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>
 </div>
-<div id="testCanv"></div>
+<div id="testCanv">
+  <div id="canvToolTip">
+    <h3 class="gene">Rv3198c</h3>
+    <h3 class="name">(uvrD2)</h3>
+    <p class="condition">
+      <span class="condition">[3]: h37rv whib7 null ethanol vs. 1.0 ug/ml tetracyclin for 15 min</span>
+    </p>
+    <p>
+      <span>Log fold change: -0.310</span>
+    </p>
+  </div>
+</div>
 
 <style>
     html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; }
     #browseToolbar { width: 1000px; height: 50px; positon: relative; }
     #testCanv { width: 1000px; height: 500px; position: relative; }
+    h3 { font-size: 16px; color: #666; }
+    #canvToolTip { font: 12px Arial; position:absolute; display:none; top:0; left:0; border: 1px solid black; padding-left: 20px; padding-right: 20px; z-index: 2; background-color: rgba(255,255,255,0.9); }
+    .gene { display: inline-block; }
+    .name { padding-left: 10px; display: inline-block; }
+    .condition { max-width: 300px; }
     #hmHighlightCanvas { z-index: 1; }
     #hmTextOverflowCover1, #hmTextOverflowCover2, #hmTextOverflowCover3 { z-index: 1; background-color: #FFF; }
 </style>
@@ -254,6 +270,11 @@ HMHeatmap.prototype.init = function() {
         var evt = e || event;
         HMHeat.highlightCell(evt.offsetX, evt.offsetY);
     };
+    
+    this.highlightCanv.onmouseout = function(e) {
+        HMHeat.highlightCtx.clearRect(0, 0, HMHeat.highlightCanv.width, HMHeat.highlightCanv.height);
+        HMHeat.browser.onMouseOut();
+    };
 };
 
 HMHeatmap.prototype.highlightCell = function(x, y) {
@@ -266,6 +287,18 @@ HMHeatmap.prototype.highlightCell = function(x, y) {
     // Draw highlight box
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
     this.highlightCtx.strokeRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
+    
+    // Tooltip
+    this.browser.showTooltip();
+    var placementX = ((cw*j)-this.scrollX) + this.browser.hmTL.left + ch;
+    var placementY = ((ch*i)-this.scrollY) + this.browser.hmTL.top + cw;
+    if (placementX + this.browser.tooltipDiv.offsetWidth > this.browser.width) {
+        this.browser.tooltipDiv.style.top = placementY - this.browser.tooltipDiv.offsetHeight - ch + 'px';
+        this.browser.tooltipDiv.style.left = placementX - this.browser.tooltipDiv.offsetWidth - cw + 'px';
+    } else {
+        this.browser.tooltipDiv.style.top = placementY + 'px';
+        this.browser.tooltipDiv.style.left = placementX + 'px';
+    }
 
     // Draw highlight lines
     // Vertical
@@ -365,10 +398,10 @@ HMColHeaders.prototype.render = function() {
     // for every label we are rendering in order to get rotated text
     for(var i = 0; i < this.colHeaders.length; ++i) {
         this.colHeaderCtx.save();
-        this.colHeaderCtx.translate(i*cw + this.browser.hmTL.left - this.scrollX, this.height/2);
+        this.colHeaderCtx.translate(i*cw + (cw/2) + this.browser.hmTL.left - this.scrollX, this.height/2);
         this.colHeaderCtx.rotate(-Math.PI/2);
         this.colHeaderCtx.textAlign = 'center';
-        this.colHeaderCtx.textBaseline = 'top';
+        this.colHeaderCtx.textBaseline = 'middle';
         this.colHeaderCtx.fillText(this.colHeaders[i], this.browser.settings.labelTextPadding/2, 0);
         this.colHeaderCtx.restore();
     }
@@ -376,6 +409,10 @@ HMColHeaders.prototype.render = function() {
 
 HMColHeaders.prototype.clear = function() {
     this.colHeaderCtx.clearRect(0, 0, this.colHeaderCanv.width, this.colHeaderCanv.height);
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+};
+
+HMColHeaders.prototype.clearHighlights = function() {
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
 };
 
@@ -464,9 +501,9 @@ HMRowHeaders.prototype.getMaxWidth = function(textArr, ctx) {
 
 HMRowHeaders.prototype.render = function() {
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
-    this.rowHeaderCtx.textBaseline = 'top';
+    this.rowHeaderCtx.textBaseline = 'middle';
     for(var i = 0; i < this.rowHeaders.length; ++i) {
-        this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*ch +  this.browser.hmTL.top - this.scrollY);
+        this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
     }
     this.searchHighlightHeaders(this.highlightedSearchIndices);
 };
@@ -490,6 +527,8 @@ HMRowHeaders.prototype.highlightHeader = function(i, j) {
 };
 
 HMRowHeaders.prototype.search = function(query) {
+    if (!query) { return []; }
+    
     query = query.toLowerCase();
     var indices = [];
     for (var i = 0; i < this.rowHeaders.length; ++i) {
@@ -518,6 +557,10 @@ HMRowHeaders.prototype.clear = function() {
     this.rowHeaderCtx.clearRect(0, 0, this.rowHeaderCanv.width, this.rowHeaderCanv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
     this.searchHighlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+};
+
+HMRowHeaders.prototype.clearHighlights = function() {
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
 };
 
 HMRowHeaders.prototype.redraw = function() {
@@ -549,8 +592,9 @@ HMRowHeaders.prototype.onHighlightCell = function(i, j) {
     this.highlightHeader(i,j);
 };
 
-function HMBrowser(parentDiv, rowHeaders, colHeaders, data, settings) {
+function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings) {
     this.parentDiv = parentDiv;
+    this.tooltipDiv = tooltipDiv;
     this.maxWidth = parentDiv.clientWidth;
     this.width = this.maxWidth;
     this.maxHeight = parentDiv.clientHeight;
@@ -667,6 +711,14 @@ HMBrowser.prototype.getHeatmapWidth = function() {
     return this.maxWidth - this.hmTL.left - extra;
 };
 
+HMBrowser.prototype.showTooltip = function () {
+    this.tooltipDiv.style.display = 'block';
+}
+
+HMBrowser.prototype.hideTooltip = function () {
+    this.tooltipDiv.style.display = 'none';
+}
+
 HMBrowser.prototype.zoomIn = function() {
     this.zoom += 0.02;
     this.redraw();
@@ -686,6 +738,12 @@ HMBrowser.prototype.searchRows = function(query) {
     var indices = this.rowHeads.search(query);
     this.rowHeads.searchHighlightHeaders(indices);
     //this.heatmap.highlightSearch(indices);
+};
+
+HMBrowser.prototype.onMouseOut = function() {
+    this.hideTooltip();
+    this.colHeads.clearHighlights();
+    this.rowHeads.clearHighlights();
 };
 
 HMBrowser.prototype.onScrollY = function(scrollY) {
@@ -749,8 +807,8 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var numrows = 4000;
-var numcols = 300;
+var numrows = 30;
+var numcols = 70;
 
 var rowHeads = [];
 for(var i = 0; i < numrows; ++i) { rowHeads.push('Rv' + pad(i, 4)); }
@@ -773,7 +831,7 @@ for(var i = 0; i < numrows; ++i) {
     data.push(row);
 }
 
-var br = new HMBrowser(document.getElementById('testCanv'), rowHeads, colHeads, data);
+var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, colHeads, data);
 br.init();
 br.render();
 

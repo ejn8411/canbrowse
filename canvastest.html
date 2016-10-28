@@ -277,15 +277,21 @@ function HMHeatmap(hmBr, width, height, data, numRows, numCols, tlStart) {
     this.numRows = numRows;
     this.numCols = numCols;
     this.tlStart = tlStart;
+    this.highlightedSearchIndices = [];
 }
 
 HMHeatmap.prototype.init = function() {
     var HMHeat = this;
     this.canv = createCanvas('hmCanvas', this.width, this.height, 'position: absolute; top: ' + this.tlStart.top + 'px; left: ' + this.tlStart.left + 'px');
     this.highlightCanv = createCanvas('hmHighlightCanvas', this.width, this.height, 'position: absolute; top: ' + this.tlStart.top + 'px; left: ' + this.tlStart.left + 'px');
+    this.searchHighlightCanv = createCanvas('hmSearchHighlightCanvas', this.width, this.height, 'position: absolute; top: ' + this.tlStart.top + 'px; left: ' + this.tlStart.left + 'px');
     this.browser.parentDiv.appendChild(this.canv);
     this.browser.parentDiv.appendChild(this.highlightCanv);
+    this.browser.parentDiv.appendChild(this.searchHighlightCanv);
     this.ctx = this.canv.getContext("2d");
+    this.searchHighlightCtx = this.searchHighlightCanv.getContext("2d");
+    this.searchHighlightCtx.strokeStyle = this.browser.settings.highlightSearchStroke;
+    this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchStrokeOpacity;
     this.highlightCtx = this.highlightCanv.getContext("2d");
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
@@ -304,16 +310,22 @@ HMHeatmap.prototype.setWidth = function(width) {
     this.width = width;
     this.canv.width = width;
     this.highlightCanv.width = width;
+    this.searchHighlightCanv.width = width;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
+    this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;
+    this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchStrokeOpacity;
 };
 
 HMHeatmap.prototype.setHeight = function(height) {
     this.height = height;
     this.canv.height = height;
     this.highlightCanv.height = height;
+    this.searchHighlightCanv.height = height;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
+    this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;
+    this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchStrokeOpacity;
 };
 
 HMHeatmap.prototype.highlightCell = function(x, y) {
@@ -359,9 +371,54 @@ HMHeatmap.prototype.highlightCell = function(x, y) {
     this.browser.onHighlightCell(i, j);
 };
 
+HMHeatmap.prototype.indices2ranges = function(indices) {
+    if (!indices) { return []; }
+    
+    var ranges = [];
+    var startIdx = 0;
+    var currVal = indices[0];
+    for (var i = 1; i < indices.length; ++i) {
+        currVal += 1;
+        if (indices[i] !== currVal) {
+            ranges.push({ start: indices[startIdx], end: indices[i-1] });
+            startIdx = i;
+            currVal = indices[i];
+        }
+    }
+    
+    ranges.push({ start: indices[startIdx], end: indices[indices.length-1] });
+    
+    return ranges;
+};
+
+HMHeatmap.prototype.searchHighlightCellRanges = function(indices) {
+    var cw = this.browser.settings.cellWidth * this.browser.zoom;
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    
+    this.highlightedSearchIndices = indices;
+    
+    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+    
+    var ranges = this.indices2ranges(indices);
+    for (var i = 0; i < ranges.length; ++i) {
+        var range = ranges[i];
+        
+        this.searchHighlightCtx.beginPath();
+        this.searchHighlightCtx.moveTo(0, (ch*range.start)-this.scrollY);
+        this.searchHighlightCtx.lineTo(this.width, (ch*range.start)-this.scrollY);
+        this.searchHighlightCtx.stroke();
+        
+        this.searchHighlightCtx.beginPath();
+        this.searchHighlightCtx.moveTo(0, (ch*(range.end+1))-this.scrollY);
+        this.searchHighlightCtx.lineTo(this.width, (ch*(range.end+1))-this.scrollY);
+        this.searchHighlightCtx.stroke();
+    }
+};
+
 HMHeatmap.prototype.clear = function() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 };
 
 HMHeatmap.prototype.setScrollX = function(scrollX) {
@@ -394,6 +451,7 @@ HMHeatmap.prototype.render = function() {
         }
     }
     this.ctx.stroke();
+    this.searchHighlightCellRanges(this.highlightedSearchIndices);
 };
 
 HMHeatmap.prototype.redraw = function() {
@@ -531,8 +589,8 @@ HMRowHeaders.prototype.init = function() {
     this.searchHighlightCanv.width = this.width;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
-    this.searchHighlightCtx.fillStyle = '#33CCFF';
-    this.searchHighlightCtx.globalAlpha = 0.3;
+    this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;
+    this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchOpacity;
 };
 
 HMRowHeaders.prototype.getMaxWidth = function(textArr, ctx) {
@@ -589,7 +647,7 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     
     this.highlightedSearchIndices = indices;
     
-    this.searchHighlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
     
     for (var i = 0; i < indices.length; ++i) {
         var idx = indices[i];
@@ -604,7 +662,7 @@ HMRowHeaders.prototype.setScrollY = function(scrollY) {
 HMRowHeaders.prototype.clear = function() {
     this.rowHeaderCtx.clearRect(0, 0, this.rowHeaderCanv.width, this.rowHeaderCanv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
-    this.searchHighlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 };
 
 HMRowHeaders.prototype.clearHighlights = function() {
@@ -623,8 +681,8 @@ HMRowHeaders.prototype.setHeight = function(height) {
     this.searchHighlightCanv.height = height;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
-    this.searchHighlightCtx.fillStyle = '#33CCFF';
-    this.searchHighlightCtx.globalAlpha = 0.3;
+    this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;
+    this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchOpacity;
 };
 
 HMRowHeaders.prototype.onScrollX = function(scrollX) {
@@ -665,6 +723,10 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
                                   vertScrollWidth: 10, 
                                   horizScrollHeight: 10, 
                                   defaultScrollerFill: '#CCC', 
+                                  highlightSearchStroke: '#333',
+                                  highlightSearchStrokeOpacity: 1.0,
+                                  highlightSearchFill: '#33CCFF',
+                                  highlightSearchOpacity: 0.3,
                                   highlightScrollerFill: '#999', 
                                   highlightCellColor: '#CC0000', 
                                   highlightCellLineWidth: 1 };
@@ -852,7 +914,7 @@ HMBrowser.prototype.zoomExact = function(zoom) {
 HMBrowser.prototype.searchRows = function(query) {
     var indices = this.rowHeads.search(query);
     this.rowHeads.searchHighlightHeaders(indices);
-    //this.heatmap.highlightSearch(indices);
+    this.heatmap.searchHighlightCellRanges(indices);
 };
 
 HMBrowser.prototype.onMouseOut = function() {
@@ -945,6 +1007,8 @@ for(var i = 0; i < numrows; ++i) {
     }
     data.push(row);
 }
+
+document.onselectstart = function(){ return false; }
 
 var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, colHeads, data);
 br.init();

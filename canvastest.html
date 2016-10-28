@@ -23,7 +23,7 @@
 <style>
     html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; }
     #browseToolbar { width: 1000px; height: 50px; positon: relative; }
-    #testCanv { width: 1000px; height: 500px; position: relative; }
+    #testCanv { width: 100%; height: 800px; position: relative; }
     h3 { font-size: 16px; color: #666; }
     #canvToolTip { font: 12px Arial; position:absolute; display:none; top:0; left:0; border: 1px solid black; padding-left: 20px; padding-right: 20px; z-index: 2; background-color: rgba(255,255,255,0.9); }
     .gene { display: inline-block; }
@@ -94,8 +94,15 @@ HMVertScrollBar.prototype.init = function() {
     };
 };
 
-HMVertScrollBar.prototype.needsScroller = function() {
-    return this.browser.numRows * this.browser.settings.cellHeight * this.browser.zoom > this.browser.getHeatmapHeight();
+HMVertScrollBar.prototype.setWidth = function(width) {
+    this.width = width;
+    this.scrollYCanv.width = width;
+    this.scrollYCanv.style.left = (this.browser.width - this.width) + 'px';
+};
+
+HMVertScrollBar.prototype.setHeight = function(height) {
+    this.height = height;
+    this.scrollYCanv.height = height;
 };
 
 HMVertScrollBar.prototype.onScroller = function(evt) {
@@ -193,8 +200,15 @@ HMHorizScrollBar.prototype.init = function() {
     };
 };
 
-HMHorizScrollBar.prototype.needsScroller = function() {
-    return this.browser.numCols * this.browser.settings.cellWidth * this.browser.zoom > this.browser.getHeatmapWidth();
+HMHorizScrollBar.prototype.setWidth = function(width) {
+    this.width = width;
+    this.scrollXCanv.width = width;
+};
+
+HMHorizScrollBar.prototype.setHeight = function(height) {
+    this.height = height;
+    this.scrollXCanv.height = height;
+    this.scrollXCanv.style.top = (this.browser.height - this.height) + 'px';
 };
 
 HMHorizScrollBar.prototype.onScroller = function(evt) {
@@ -275,6 +289,22 @@ HMHeatmap.prototype.init = function() {
         HMHeat.highlightCtx.clearRect(0, 0, HMHeat.highlightCanv.width, HMHeat.highlightCanv.height);
         HMHeat.browser.onMouseOut();
     };
+};
+
+HMHeatmap.prototype.setWidth = function(width) {
+    this.width = width;
+    this.canv.width = width;
+    this.highlightCanv.width = width;
+    this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
+    this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
+};
+
+HMHeatmap.prototype.setHeight = function(height) {
+    this.height = height;
+    this.canv.height = height;
+    this.highlightCanv.height = height;
+    this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
+    this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
 };
 
 HMHeatmap.prototype.highlightCell = function(x, y) {
@@ -399,7 +429,7 @@ HMColHeaders.prototype.render = function() {
     for(var i = 0; i < this.colHeaders.length; ++i) {
         this.colHeaderCtx.save();
         this.colHeaderCtx.translate(i*cw + (cw/2) + this.browser.hmTL.left - this.scrollX, this.height/2);
-        this.colHeaderCtx.rotate(-Math.PI/2);
+        this.colHeaderCtx.rotate(-Math.PI/4);
         this.colHeaderCtx.textAlign = 'center';
         this.colHeaderCtx.textBaseline = 'middle';
         this.colHeaderCtx.fillText(this.colHeaders[i], this.browser.settings.labelTextPadding/2, 0);
@@ -604,7 +634,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
     this.colHeaders = colHeaders;
     this.numCols = colHeaders.length;
     this.data = data;
-    this.zoom = 1.0;
+    this.zoom = 3.7;
     this.scrollX = 0;
     this.scrollY = 0;
     this.scrollingX = false;
@@ -653,7 +683,6 @@ HMBrowser.prototype.init = function() {
     if (!this.needsVertScroll) {
         this.height = this.height + (this.needsHorizScroll ? this.settings.horizScrollHeight : 0);
     }
-
     
     var vertScrollWidth = this.needsVertScroll ? this.settings.vertScrollWidth : 0;
     var vertScrollHeight = this.needsHorizScroll ? (this.height - this.colHeads.height - this.settings.horizScrollHeight) : this.height - this.colHeads.height;
@@ -672,7 +701,6 @@ HMBrowser.prototype.init = function() {
     this.parentDiv.appendChild(textOvrCanv);
     var textOvrCanv = createCanvas('hmTextOverflowCover3', this.vertScroll.width, this.hmTL.top, 'position: absolute; top: 0; left: ' + (this.width - vertScrollWidth) + 'px;');
     this.parentDiv.appendChild(textOvrCanv);
-    
     
     this.heatmap = new HMHeatmap(this, this.width - this.rowHeads.width - this.vertScroll.width, this.height - this.colHeads.height - this.horizScroll.height, this.data, this.numRows, this.numCols, this.hmTL);
 
@@ -693,6 +721,8 @@ HMBrowser.prototype.init = function() {
     };
     this.parentDiv.onwheel = function(e) {
         var evt = e || event;
+        
+        hmBr.hideTooltip();
         if (evt.shiftKey) {
             hmBr.horizScroll.onWheel(evt);
         } else {
@@ -719,18 +749,62 @@ HMBrowser.prototype.hideTooltip = function () {
     this.tooltipDiv.style.display = 'none';
 }
 
+HMBrowser.prototype.onZoom = function() {
+    this.width = (this.numCols * this.settings.cellWidth * this.zoom) + this.hmTL.left;
+    if (this.width > this.maxWidth) {
+        this.needsHorizScroll = true;
+        this.width = this.maxWidth;
+    }
+    
+    this.height = (this.numRows * this.settings.cellHeight * this.zoom) + this.hmTL.top;
+    if (this.height > this.maxHeight) {
+        this.needsVertScroll = true;
+        this.height = this.maxHeight;
+    }
+    
+    if (!this.needsHorizScroll) {
+        this.width = this.width + (this.needsVertScroll ? this.settings.vertScrollWidth : 0);
+    }
+    
+    if (!this.needsVertScroll) {
+        this.height = this.height + (this.needsHorizScroll ? this.settings.horizScrollHeight : 0);
+    }
+    
+    var vertScrollWidth = this.needsVertScroll ? this.settings.vertScrollWidth : 0;
+    var vertScrollHeight = this.needsHorizScroll ? (this.height - this.colHeads.height - this.settings.horizScrollHeight) : this.height - this.colHeads.height;
+    this.vertScroll.setWidth(vertScrollWidth);
+    this.vertScroll.setHeight(vertScrollHeight);
+    
+    var horizScrollHeight = this.needsHorizScroll ? this.settings.horizScrollHeight : 0;
+    var horizScrollWidth = this.needsVertScroll ? (this.width - this.rowHeads.width - this.settings.vertScrollWidth) : this.width - this.rowHeads.width;
+    this.horizScroll.setWidth(horizScrollWidth);
+    this.horizScroll.setHeight(horizScrollHeight);
+    
+    this.colHeads.setWidth(this.width - vertScrollWidth);
+    this.rowHeads.setHeight(this.height - horizScrollHeight);
+    
+    document.getElementById('hmTextOverflowCover2').style.top = (this.height - horizScrollHeight);
+    document.getElementById('hmTextOverflowCover3').style.top = (this.width - vertScrollWidth);
+    
+    this.heatmap.setWidth(this.width - this.rowHeads.width - this.vertScroll.width);
+    this.heatmap.setHeight(this.height - this.colHeads.height - this.horizScroll.height);
+};
+
 HMBrowser.prototype.zoomIn = function() {
     this.zoom += 0.02;
+    this.onZoom();
     this.redraw();
 };
 
 HMBrowser.prototype.zoomOut = function() {
     this.zoom -= 0.02;
+    this.onZoom();
     this.redraw();
 };
 
 HMBrowser.prototype.zoomExact = function(zoom) {
     this.zoom = zoom;
+    this.onZoom();
     this.redraw();
 };
 
@@ -807,8 +881,8 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var numrows = 30;
-var numcols = 70;
+var numrows = 20;
+var numcols = 50;
 
 var rowHeads = [];
 for(var i = 0; i < numrows; ++i) { rowHeads.push('Rv' + pad(i, 4)); }

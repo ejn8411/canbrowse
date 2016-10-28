@@ -6,7 +6,7 @@
 
 <style>
     html, body { width: 100%; height: 100%; padding: 0; margin: 0; overflow: hidden; }
-    #testCanv { width: 100%; height: 100%; }
+    #testCanv { width: 1000px; height: 500px; position: relative; }
     #hmHighlightCanvas { z-index: 1; }
     #hmTextOverflowCover1, #hmTextOverflowCover2, #hmTextOverflowCover3 { z-index: 1; background-color: #FFF; }
 </style>
@@ -581,7 +581,7 @@ HMBrowser.prototype.init = function() {
     
     var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
-    var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.horizScroll.height, 'position: absolute; bottom: 0; left: 0;');
+    var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.horizScroll.height, 'position: absolute; top: ' + (this.height - horizScrollHeight) + 'px; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
     var textOvrCanv = createCanvas('hmTextOverflowCover3', this.vertScroll.width, this.hmTL.top, 'position: absolute; top: 0; left: ' + (this.width - vertScrollWidth) + 'px;');
     this.parentDiv.appendChild(textOvrCanv);

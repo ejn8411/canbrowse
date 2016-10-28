@@ -106,6 +106,10 @@ HMVertScrollBar.prototype.setHeight = function(height) {
     this.scrollYCanv.height = height;
 };
 
+HMVertScrollBar.prototype.setScrollY = function(scrollY) {
+    this.scrollY = scrollY;
+};
+
 HMVertScrollBar.prototype.onScroller = function(evt) {
     return evt.offsetY > this.scrollY && evt.offsetY < this.scrollY + this.scrollerHeight;
 };
@@ -210,6 +214,10 @@ HMHorizScrollBar.prototype.setHeight = function(height) {
     this.height = height;
     this.scrollXCanv.height = height;
     this.scrollXCanv.style.top = (this.browser.height - this.height) + 'px';
+};
+
+HMHorizScrollBar.prototype.setScrollX = function(scrollX) {
+    this.scrollX = scrollX;
 };
 
 HMHorizScrollBar.prototype.onScroller = function(evt) {
@@ -356,6 +364,14 @@ HMHeatmap.prototype.clear = function() {
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
 };
 
+HMHeatmap.prototype.setScrollX = function(scrollX) {
+    this.scrollX = scrollX;
+};
+
+HMHeatmap.prototype.setScrollY = function(scrollY) {
+    this.scrollY = scrollY;
+};
+
 HMHeatmap.prototype.onScrollX = function(scrollX) {
     this.scrollX = scrollX;
     this.redraw();
@@ -429,6 +445,10 @@ HMColHeaders.prototype.render = function() {
         this.colHeaderCtx.fillText(this.colHeaders[i], this.browser.settings.labelTextPadding/2, 0);
         this.colHeaderCtx.restore();
     }
+};
+
+HMColHeaders.prototype.setScrollX = function(scrollX) {
+    this.scrollX = scrollX;
 };
 
 HMColHeaders.prototype.clear = function() {
@@ -577,6 +597,10 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     }
 };
 
+HMRowHeaders.prototype.setScrollY = function(scrollY) {
+    this.scrollY = scrollY;
+};
+
 HMRowHeaders.prototype.clear = function() {
     this.rowHeaderCtx.clearRect(0, 0, this.rowHeaderCanv.width, this.rowHeaderCanv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
@@ -636,8 +660,8 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
     this.needsHorizScroll = false;
     this.needsVertScroll = false;
     this.settings = settings || { labelTextPadding: 2,
-                                  cellWidth: 10, 
-                                  cellHeight: 10, 
+                                  cellWidth: 20, 
+                                  cellHeight: 20, 
                                   vertScrollWidth: 10, 
                                   horizScrollHeight: 10, 
                                   defaultScrollerFill: '#CCC', 
@@ -756,6 +780,13 @@ HMBrowser.prototype.onZoom = function() {
     this.scrollX = this.scrollY = 0;
     this.needsVertScroll = this.needsHorizScroll = false;
     
+    this.vertScroll.setScrollY(0);
+    this.horizScroll.setScrollX(0);
+    this.colHeads.setScrollX(0);
+    this.rowHeads.setScrollY(0);
+    this.heatmap.setScrollX(0);
+    this.heatmap.setScrollY(0);
+    
     this.width = (this.numCols * this.settings.cellWidth * this.zoom) + this.hmTL.left;
     if (this.width > this.maxWidth) {
         this.needsHorizScroll = true;
@@ -789,8 +820,12 @@ HMBrowser.prototype.onZoom = function() {
     this.colHeads.setWidth(this.width - vertScrollWidth);
     this.rowHeads.setHeight(this.height - horizScrollHeight);
     
-    document.getElementById('hmTextOverflowCover2').style.top = (this.height - horizScrollHeight);
-    document.getElementById('hmTextOverflowCover3').style.top = (this.width - vertScrollWidth);
+    var cover2 = document.getElementById('hmTextOverflowCover2');
+    cover2.height = horizScrollHeight;
+    cover2.style.top = (this.height - horizScrollHeight);
+    var cover3 = document.getElementById('hmTextOverflowCover3');
+    cover3.width = vertScrollWidth;
+    cover3.style.top = (this.width - vertScrollWidth);
     
     this.heatmap.setWidth(this.width - this.rowHeads.width - this.vertScroll.width);
     this.heatmap.setHeight(this.height - this.colHeads.height - this.horizScroll.height);
@@ -887,8 +922,8 @@ function pad(n, width, z) {
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 }
 
-var numrows = 20;
-var numcols = 50;
+var numrows = 4000;
+var numcols = 300;
 
 var rowHeads = [];
 for(var i = 0; i < numrows; ++i) { rowHeads.push('Rv' + pad(i, 4)); }

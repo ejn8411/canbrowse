@@ -24,7 +24,7 @@ function getCoveragePerc(maxWidth, actWidth) {
     return maxWidth/actWidth;
 }
 
-function HMVertScrollBar(hmBr, width, height, tlStart) {
+function HMVertScrollBar(hmBr, width, height) {
     this.browser = hmBr;
     this.scrollY = 0;
     this.width = width;
@@ -36,12 +36,11 @@ function HMVertScrollBar(hmBr, width, height, tlStart) {
     this.scrollerFill = hmBr.settings.defaultScrollerFill;
     this.scrollerHighlightFill = hmBr.settings.highlightScrollerFill;
     this.scrollerDefaultFill = hmBr.settings.defaultScrollerFill;
-    this.tlStart = tlStart;
 }
 
 HMVertScrollBar.prototype.init = function() {
     var hmVertScroll = this;
-    this.scrollYCanv = createCanvas('hmScrollYCanvas', this.width, this.height, 'position: absolute; top: ' + this.tlStart.top + 'px; right: 0');
+    this.scrollYCanv = createCanvas('hmScrollYCanvas', this.width, this.height, 'position: absolute; top: ' + this.browser.hmTL.top + 'px; left: ' + (this.browser.width - this.width) + 'px;');
     this.browser.parentDiv.appendChild(this.scrollYCanv);
     this.scrollYCtx = this.scrollYCanv.getContext("2d");
     this.scrollYCanv.onmousedown = function(e) {
@@ -99,6 +98,7 @@ HMVertScrollBar.prototype.onMouseUp = function(evt) {
 };
 
 HMVertScrollBar.prototype.onWheel = function(evt) {
+    if (!this.width || !this.height) return;
     var diff = evt.deltaY;
     this.scrollY = (this.scrollY + diff < 0)? 0 : (this.scrollY + diff > this.height - this.scrollerHeight)? this.height - this.scrollerHeight : this.scrollY + diff;
     this.redraw();
@@ -123,7 +123,7 @@ HMVertScrollBar.prototype.render = function() {
     this.scrollYCtx.stroke();
 };
 
-function HMHorizScrollBar(hmBr, width, height, tlStart) {
+function HMHorizScrollBar(hmBr, width, height) {
     this.browser = hmBr;
     this.scrollX = 0;
     this.width = width;
@@ -135,12 +135,11 @@ function HMHorizScrollBar(hmBr, width, height, tlStart) {
     this.scrollerFill = hmBr.settings.defaultScrollerFill;
     this.scrollerHighlightFill = hmBr.settings.highlightScrollerFill;
     this.scrollerDefaultFill = hmBr.settings.defaultScrollerFill;
-    this.tlStart = tlStart;
 }
 
 HMHorizScrollBar.prototype.init = function() {
     var hmHorizScroll = this;
-    this.scrollXCanv = createCanvas('hmScrollXCanvas', this.width, this.height, 'position: absolute; bottom: 0; left: ' + this.tlStart.left + 'px');
+    this.scrollXCanv = createCanvas('hmScrollXCanvas', this.width, this.height, 'position: absolute; top: ' + (this.browser.height - this.height) + 'px; left: ' + this.browser.hmTL.left + 'px');
     this.browser.parentDiv.appendChild(this.scrollXCanv);
     this.scrollXCtx = this.scrollXCanv.getContext("2d");
     this.scrollXCanv.onmousedown = function(e) {
@@ -549,27 +548,37 @@ HMBrowser.prototype.init = function() {
         this.width = this.maxWidth;
     }
     
-    this.height = (this.numRows * this.settings.cellHeight * this.zoom) + this.hmTL.top
+    this.height = (this.numRows * this.settings.cellHeight * this.zoom) + this.hmTL.top;
     if (this.height > this.maxHeight) {
         this.needsVertScroll = true;
         this.height = this.maxHeight;
     }
     
+    if (!this.needsHorizScroll) {
+        this.width = this.width + (this.needsVertScroll ? this.settings.vertScrollWidth : 0);
+    }
+    
+    if (!this.needsVertScroll) {
+        this.height = this.height + (this.needsHorizScroll ? this.settings.horizScrollHeight : 0);
+    }
+
+    
     var vertScrollWidth = this.needsVertScroll ? this.settings.vertScrollWidth : 0;
     var vertScrollHeight = this.needsHorizScroll ? (this.height - this.colHeads.height - this.settings.horizScrollHeight) : this.height - this.colHeads.height;
-    this.vertScroll = new HMVertScrollBar(this, vertScrollWidth, vertScrollHeight, this.hmTL);
-    var horizScrollHeight = this.needsHorizScroll ? this.settings.horizScrollHeight : 0;
-    var horizScrollWidth = this.needsVertScroll ? (this.width - this.rowHeads.width - this.settings.vertScrollWidth) : this.height - this.colHeads.height;
-    this.horizScroll = new HMHorizScrollBar(this, horizScrollWidth, horizScrollHeight, this.hmTL);
+    this.vertScroll = new HMVertScrollBar(this, vertScrollWidth, vertScrollHeight);
     
-    this.colHeads.setWidth(horizScrollWidth + this.rowHeads.width);
-    this.rowHeads.setHeight(vertScrollHeight + this.colHeads.height);
+    var horizScrollHeight = this.needsHorizScroll ? this.settings.horizScrollHeight : 0;
+    var horizScrollWidth = this.needsVertScroll ? (this.width - this.rowHeads.width - this.settings.vertScrollWidth) : this.width - this.rowHeads.width;
+    this.horizScroll = new HMHorizScrollBar(this, horizScrollWidth, horizScrollHeight);
+    
+    this.colHeads.setWidth(this.width - vertScrollWidth);
+    this.rowHeads.setHeight(this.height - horizScrollHeight);
     
     var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
     var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.horizScroll.height, 'position: absolute; bottom: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
-    var textOvrCanv = createCanvas('hmTextOverflowCover3', this.vertScroll.width, this.hmTL.top, 'position: absolute; top: 0; right: 0;');
+    var textOvrCanv = createCanvas('hmTextOverflowCover3', this.vertScroll.width, this.hmTL.top, 'position: absolute; top: 0; left: ' + (this.width - vertScrollWidth) + 'px;');
     this.parentDiv.appendChild(textOvrCanv);
     
     
@@ -664,7 +673,7 @@ function pad(n, width, z) {
 }
 
 var numrows = 4000;
-var numcols = 10;
+var numcols = 300;
 
 var rowHeads = [];
 for(var i = 0; i < numrows; ++i) { rowHeads.push('Rv' + pad(i, 4)); }

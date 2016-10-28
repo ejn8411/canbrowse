@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body>
+<h3>Test Canvas</h3>
 <div id="testCanv"></div>
 
 <style>
@@ -400,6 +401,8 @@ HMColHeaders.prototype.setWidth = function(width) {
     this.width = width;
     this.colHeaderCanv.width = width;
     this.highlightCanv.width = width;
+    this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
+    this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
 };
 
 HMColHeaders.prototype.onScrollX = function(scrollX) {
@@ -486,6 +489,8 @@ HMRowHeaders.prototype.setHeight = function(height) {
     this.height = height;
     this.rowHeaderCanv.height = height;
     this.highlightCanv.height = height;
+    this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
+    this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
 };
 
 HMRowHeaders.prototype.onScrollX = function(scrollX) {

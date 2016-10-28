@@ -319,16 +319,9 @@ HMHeatmap.prototype.highlightCell = function(x, y) {
     this.highlightCtx.strokeRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
     
     // Tooltip
-    this.browser.showTooltip();
     var placementX = ((cw*j)-this.scrollX) + this.browser.hmTL.left + ch;
     var placementY = ((ch*i)-this.scrollY) + this.browser.hmTL.top + cw;
-    if (placementX + this.browser.tooltipDiv.offsetWidth > this.browser.width) {
-        this.browser.tooltipDiv.style.top = placementY - this.browser.tooltipDiv.offsetHeight - ch + 'px';
-        this.browser.tooltipDiv.style.left = placementX - this.browser.tooltipDiv.offsetWidth - cw + 'px';
-    } else {
-        this.browser.tooltipDiv.style.top = placementY + 'px';
-        this.browser.tooltipDiv.style.left = placementX + 'px';
-    }
+    this.browser.showTooltip(placementX, placementY);
 
     // Draw highlight lines
     // Vertical
@@ -741,7 +734,16 @@ HMBrowser.prototype.getHeatmapWidth = function() {
     return this.maxWidth - this.hmTL.left - extra;
 };
 
-HMBrowser.prototype.showTooltip = function () {
+HMBrowser.prototype.showTooltip = function (placementX, placementY) {
+    var cw = this.settings.cellWidth * this.zoom;
+    var ch = this.settings.cellHeight * this.zoom;
+    if (placementX + this.tooltipDiv.offsetWidth > this.maxWidth) {
+        this.tooltipDiv.style.top = placementY - this.tooltipDiv.offsetHeight - ch + 'px';
+        this.tooltipDiv.style.left = placementX - this.tooltipDiv.offsetWidth - cw + 'px';
+    } else {
+        this.tooltipDiv.style.top = placementY + 'px';
+        this.tooltipDiv.style.left = placementX + 'px';
+    }
     this.tooltipDiv.style.display = 'block';
 }
 
@@ -750,6 +752,9 @@ HMBrowser.prototype.hideTooltip = function () {
 }
 
 HMBrowser.prototype.onZoom = function() {
+    this.scrollX = this.scrollY = 0;
+    this.needsVertScroll = this.needsHorizScroll = false;
+    
     this.width = (this.numCols * this.settings.cellWidth * this.zoom) + this.hmTL.left;
     if (this.width > this.maxWidth) {
         this.needsHorizScroll = true;

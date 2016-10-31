@@ -30,7 +30,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
     this.scrollingY = false;
     this.needsHorizScroll = false;
     this.needsVertScroll = false;
-    this.settings = settings || { labelTextPadding: 2,
+    this.settings = settings || { labelTextPadding: 4,
                                   cellWidth: 20,
                                   cellHeight: 20,
                                   vertScrollWidth: 10,
@@ -47,7 +47,9 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
                                   highlightSearchOpacity: 0.3,
                                   highlightScrollerFill: '#999',
                                   highlightCellColor: '#CC0000',
-                                  highlightCellLineWidth: 1 };
+                                  highlightCellLineWidth: 1,
+                                  renderToolTip: function() {}
+                                };
 }
 
 HMBrowser.prototype.init = function() {
@@ -139,7 +141,7 @@ HMBrowser.prototype.getHeatmapWidth = function() {
     return this.maxWidth - this.hmTL.left - extra;
 };
 
-HMBrowser.prototype.showTooltip = function (placementX, placementY) {
+HMBrowser.prototype.showTooltip = function (placementX, placementY, i, j) {
     var cw = this.settings.cellWidth * this.zoom;
     var ch = this.settings.cellHeight * this.zoom;
     if (placementX + this.tooltipDiv.offsetWidth > this.maxWidth) {
@@ -149,6 +151,7 @@ HMBrowser.prototype.showTooltip = function (placementX, placementY) {
         this.tooltipDiv.style.top = placementY + 'px';
         this.tooltipDiv.style.left = placementX + 'px';
     }
+    this.settings.renderToolTip(i, j);
     this.tooltipDiv.style.display = 'block';
 }
 

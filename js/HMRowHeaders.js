@@ -57,12 +57,13 @@ HMRowHeaders.prototype.render = function() {
         this.rowHeaderCtx.textBaseline = 'middle';
         for(var i = 0; i < this.rowHeaders.length; ++i) {
             if (Array.isArray(this.rowHeaders[i])) {
+                this.rowHeaderCtx.textAlign = 'center';
                 var currWidth = 0;
                 // Render the first col then loop through any remaining
-                this.rowHeaderCtx.fillText(this.rowHeaders[i][0], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                this.rowHeaderCtx.fillText(this.rowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
                 for(var j = 1; j < this.rowHeaders[i].length; ++j) {
                     currWidth += this.headerWidths[j-1];
-                    this.rowHeaderCtx.fillText(this.rowHeaders[i][j], (currWidth) + this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                    this.rowHeaderCtx.fillText(this.rowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
                 }
             } else {
                 this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);

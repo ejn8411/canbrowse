@@ -10,13 +10,13 @@
 </div>
 <div id="testCanv">
   <div id="canvToolTip">
-    <h3 class="gene">Rv3198c</h3>
-    <h3 class="name">(uvrD2)</h3>
+    <h3 id="gene" class="gene">Rv3198c</h3>
+    <h3 id="name" class="name">(uvrD2)</h3>
     <p class="condition">
-      <span class="condition">[3]: h37rv whib7 null ethanol vs. 1.0 ug/ml tetracyclin for 15 min</span>
+      <span id="condition" class="condition">[3]: h37rv whib7 null ethanol vs. 1.0 ug/ml tetracyclin for 15 min</span>
     </p>
     <p>
-      <span>Log fold change: -0.310</span>
+      <span id="value">Log fold change: -0.310</span>
     </p>
   </div>
 </div>
@@ -53,7 +53,6 @@ var rowHeads = [];
 for(var i = 0; i < numrows; ++i) {
     var cols = [];
     cols.push('Rv' + pad(i, 4));
-    cols.push(''+i);
     cols.push('a'+(i%26));
     rowHeads.push(cols);
     //rowHeads.push(''+i);
@@ -86,6 +85,17 @@ for(var i = 0; i < numrows; ++i) {
 document.onselectstart = function(){ return false; }
 
 var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, colHeads, data);
+br.settings.renderToolTip = function (i, j) {
+  var tooltip = document.getElementById('canvToolTip');
+  tooltip.innerHTML = ['<h3 class="gene">' + rowHeads[i][0] + '</h3>',
+                       '<h3 class="name">' + rowHeads[i][1] + '</h3>',
+                       '<p class="condition">',
+                         '<span class="condition">' + colHeads[j] + '</span>',
+                       '</p>',
+                       '<p>',
+                         '<span>Log fold change: ' + data[i][j] + '</span>',
+                       '</p>'].join('');
+};
 br.init();
 br.render();
 

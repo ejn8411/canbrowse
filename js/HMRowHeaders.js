@@ -1,8 +1,9 @@
-function HMRowHeaders(hmBr, width, height, rowHeaders) {
+function HMRowHeaders(hmBr, width, height, rowHeaders, rowHeaderTitles) {
     this.browser = hmBr;
     this.width = width;
     this.height = height;
     this.rowHeaders = rowHeaders;
+    this.rowHeaderTitles = rowHeaderTitles;
     this.scrollY = 0;
     this.highlightedSearchIndices = [];
     this.headerWidths = Array.isArray(rowHeaders[0])? Array.apply(null, Array(rowHeaders[0].length)).map(Number.prototype.valueOf,0) : [];
@@ -12,24 +13,28 @@ function HMRowHeaders(hmBr, width, height, rowHeaders) {
 HMRowHeaders.prototype.init = function() {
     var hmBr = this;
     this.rowHeaderCanv = createCanvas('hmRowHeadCanvas', 0, this.height, 'position: absolute; left: 0');
+    this.rowHeaderTitleCanv = createCanvas('hmRowHeadTitleCanvas', 0, this.height, 'position: absolute; left: 0, top: 0');
     this.highlightCanv = createCanvas('hmRowHeadHighlightCanvas', 0, this.height, 'position: absolute; left: 0');
     this.searchHighlightCanv = createCanvas('hmRowHeadSearchHighlightCanvas', 0, this.height, 'position: absolute; left: 0');
     this.browser.parentDiv.appendChild(this.rowHeaderCanv);
+    this.browser.parentDiv.appendChild(this.rowHeaderTitleCanv);
     this.browser.parentDiv.appendChild(this.highlightCanv);
     this.browser.parentDiv.appendChild(this.searchHighlightCanv);
     this.rowHeaderCtx = this.rowHeaderCanv.getContext("2d");
+    this.rowHeaderTitleCtx = this.rowHeaderTitleCanv.getContext("2d");
     this.rowHeaderCtx.font = this.browser.settings.rowFontSizePt + 'pt ' + this.browser.settings.rowFontFamily;
     this.highlightCtx = this.highlightCanv.getContext("2d");
     this.searchHighlightCtx = this.searchHighlightCanv.getContext("2d");
-    this.width = this.getMaxWidth(this.rowHeaders, this.rowHeaderCtx);
-    this.rowHeaderCanv.width = this.width;
-    this.highlightCanv.width = this.width;
-    this.searchHighlightCanv.width = this.width;
     this.rowHeaderCtx.font = this.browser.settings.rowFontSizePt + 'pt ' + this.browser.settings.rowFontFamily;
+    this.rowHeaderTitleCtx.font = 'bold ' + this.browser.settings.rowTitleFontSizePt + 'pt ' + this.browser.settings.rowTitleFontFamily;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
     this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;
     this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchOpacity;
+    this.width = this.getMaxWidth(this.rowHeaders, this.rowHeaderCtx);
+    this.rowHeaderCanv.width = this.width;
+    this.highlightCanv.width = this.width;
+    this.searchHighlightCanv.width = this.width;
 };
 
 HMRowHeaders.prototype.getMaxWidth = function(textMat, ctx) {
@@ -39,24 +44,48 @@ HMRowHeaders.prototype.getMaxWidth = function(textMat, ctx) {
         if (Array.isArray(textMat[i])) {
             for(var j = 0; j < textMat[i].length; ++j) {
                 var curr = ctx.measureText(textMat[i][j]).width + (2*this.browser.settings.labelTextPadding);
-                this.headerWidths[j] = Math.max(curr, this.headerWidths[j]);
-                colWidths += curr;
+                var header = (this.rowHeaderTitles[j]) ? this.rowHeaderTitleCtx.measureText(this.rowHeaderTitles[j]).width + (2*this.browser.settings.labelTextPadding) : 0;
+                this.headerWidths[j] = Math.max(Math.max(curr, this.headerWidths[j]), header);
+                colWidths += this.headerWidths[j];
             }
         } else {
-            colWidths = ctx.measureText(textMat[i]).width + (2*this.browser.settings.labelTextPadding);
+            var curr = ctx.measureText(textMat[i]).width + (2*this.browser.settings.labelTextPadding);
+            var header = (this.rowHeaderTitles[i]) ? this.rowHeaderTitleCtx.measureText(this.rowHeaderTitles[i]).width + (2*this.browser.settings.labelTextPadding) : 0;
+            colWidths = Math.max(curr, header);
         }
         w = Math.max(colWidths, w);
     }
+
     return w;
+};
+
+HMRowHeaders.prototype.inView = function(i) {
+  var ch = this.browser.settings.cellHeight * this.browser.zoom;
+  var elem = {top: ch*i, bot: ch*(i+1) };
+  var view = {top: this.scrollY, bot: this.browser.heatmap.height + this.scrollY};
+  return !( elem.bot < view.top || elem.top > view.bot );
+};
+
+HMRowHeaders.prototype.renderTitles = function() {
+    this.rowHeaderTitleCtx.textBaseline = 'bottom';
+    this.rowHeaderTitleCtx.textAlign = 'center';
+    var currWidth = 0;
+    for(var i = 0; i < this.rowHeaderTitles.length; ++i) {
+        this.rowHeaderTitleCtx.fillText(this.rowHeaderTitles[i], (currWidth) + (this.headerWidths[i]/2), this.browser.hmTL.top);
+        currWidth += this.headerWidths[i];
+    }
 };
 
 HMRowHeaders.prototype.render = function() {
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
 
     if (this.approxHeaderHeights <= ch) {
+        this.renderTitles();
         this.rowHeaderCtx.textBaseline = 'middle';
         for(var i = 0; i < this.rowHeaders.length; ++i) {
-            if (Array.isArray(this.rowHeaders[i])) {
+            if (!this.inView(i)) continue;
+
+            if (Array.isArray(this.rowHeaders[0])) {
                 this.rowHeaderCtx.textAlign = 'center';
                 var currWidth = 0;
                 // Render the first col then loop through any remaining
@@ -133,6 +162,7 @@ HMRowHeaders.prototype.setScrollY = function(scrollY) {
 
 HMRowHeaders.prototype.clear = function() {
     this.rowHeaderCtx.clearRect(0, 0, this.rowHeaderCanv.width, this.rowHeaderCanv.height);
+    this.rowHeaderTitleCtx.clearRect(0, 0, this.rowHeaderTitleCanv.width, this.rowHeaderTitleCanv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 };
@@ -149,9 +179,12 @@ HMRowHeaders.prototype.redraw = function() {
 HMRowHeaders.prototype.setHeight = function(height) {
     this.height = height;
     this.rowHeaderCanv.height = height;
+    this.rowHeaderTitleCanv.width = this.browser.hmTL.left;
+    this.rowHeaderTitleCanv.height = this.browser.hmTL.top;
     this.highlightCanv.height = height;
     this.searchHighlightCanv.height = height;
     this.rowHeaderCtx.font = this.browser.settings.rowFontSizePt + 'pt ' + this.browser.settings.rowFontFamily;
+    this.rowHeaderTitleCtx.font = 'bold ' + this.browser.settings.rowTitleFontSizePt + 'pt ' + this.browser.settings.rowTitleFontFamily;
     this.highlightCtx.strokeStyle = this.browser.settings.highlightCellColor;
     this.highlightCtx.lineWidth = this.browser.settings.highlightCellLineWidth;
     this.searchHighlightCtx.fillStyle = this.browser.settings.highlightSearchFill;

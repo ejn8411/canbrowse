@@ -30,6 +30,7 @@
     .gene { display: inline-block; }
     .name { padding-left: 10px; display: inline-block; }
     .condition { max-width: 300px; }
+    #hmRowHeadTitleCanvas { z-index: 3; }
     #hmHighlightCanvas { z-index: 1; }
     #hmTextOverflowCover1, #hmTextOverflowCover2, #hmTextOverflowCover3 { z-index: 1; background-color: #FFF; }
 </style>
@@ -48,6 +49,8 @@ function pad(n, width, z) {
 
 var numrows = 4000;
 var numcols = 300;
+
+var rowHeaderTitles = ['Rv', 'Name']
 
 var rowHeads = [];
 for(var i = 0; i < numrows; ++i) {
@@ -84,7 +87,7 @@ for(var i = 0; i < numrows; ++i) {
 
 document.onselectstart = function(){ return false; }
 
-var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, colHeads, data);
+var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, rowHeaderTitles, colHeads, data);
 br.settings.renderToolTip = function (i, j) {
   var tooltip = document.getElementById('canvToolTip');
   tooltip.innerHTML = ['<h3 class="gene">' + rowHeads[i][0] + '</h3>',

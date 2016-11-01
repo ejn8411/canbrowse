@@ -11,7 +11,7 @@ function getCoveragePerc(maxWidth, actWidth) {
     return maxWidth/actWidth;
 }
 
-function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings) {
+function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeaders, data, settings) {
     this.parentDiv = parentDiv;
     this.tooltipDiv = tooltipDiv;
     this.maxWidth = parentDiv.clientWidth;
@@ -19,6 +19,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
     this.maxHeight = parentDiv.clientHeight;
     this.height = this.maxHeight;
     this.rowHeaders = rowHeaders;
+    this.rowHeaderTitles = rowHeaderTitles;
     this.numRows = rowHeaders.length;
     this.colHeaders = colHeaders;
     this.numCols = colHeaders.length;
@@ -37,6 +38,8 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, colHeaders, data, settings
                                   horizScrollHeight: 10,
                                   rowFontSizePt: 7.5,
                                   rowFontFamily: 'sans-serif',
+                                  rowTitleFontSizePt: 8.5,
+                                  rowTitleFontFamily: 'sans-serif',
                                   colFontSizePt: 7.5,
                                   colFontFamily: 'sans-serif',
                                   colTextRotation: -Math.PI/4,
@@ -56,7 +59,7 @@ HMBrowser.prototype.init = function() {
     var hmBr = this;
 
     this.colHeads = new HMColHeaders(this, this.width, this.settings.cellHeight, this.colHeaders);
-    this.rowHeads = new HMRowHeaders(this, this.settings.cellWidth, this.height, this.rowHeaders);
+    this.rowHeads = new HMRowHeaders(this, this.settings.cellWidth, this.height, this.rowHeaders, this.rowHeaderTitles);
 
     // Must init here in order to get the correct sizes for the text in the headers
     this.colHeads.init();

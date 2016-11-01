@@ -42,6 +42,13 @@ HMColHeaders.prototype.getMaxWidth = function(textMat, ctx) {
     return w;
 };
 
+HMColHeaders.prototype.inView = function(i) {
+  var cw = this.browser.settings.cellWidth * this.browser.zoom;
+  var elem = {left: cw*i, right: cw*(i+1) };
+  var view = {left: this.scrollX, right: this.browser.heatmap.width + this.scrollX};
+  return !( elem.right < view.left || elem.left > view.right );
+};
+
 HMColHeaders.prototype.render = function() {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
 
@@ -49,6 +56,8 @@ HMColHeaders.prototype.render = function() {
         // Somewhat hard to understand, but we have to esentially rotate the whole context/coord system
         // for every label we are rendering in order to get rotated text
         for(var i = 0; i < this.colHeaders.length; ++i) {
+            if (!this.inView(i)) continue;
+
             if (Array.isArray(this.colHeaders[i])) {
                 var currHeight = 0;
                 this.colHeaderCtx.save();

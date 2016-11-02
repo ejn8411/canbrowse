@@ -31,6 +31,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
     this.scrollingY = false;
     this.needsHorizScroll = false;
     this.needsVertScroll = false;
+    this.searchProvider = new HMsearchProvider();
     this.settings = settings || { labelTextPadding: 4,
                                   cellWidth: 20,
                                   cellHeight: 20,
@@ -236,7 +237,8 @@ HMBrowser.prototype.zoomExact = function(zoom) {
 };
 
 HMBrowser.prototype.searchRows = function(query) {
-    var indices = this.rowHeads.search(query);
+    var indices = this.searchProvider.search(this.rowHeaders, query);
+    //var indices = this.rowHeads.search(query);
     this.rowHeads.searchHighlightHeaders(indices);
     this.heatmap.searchHighlightCellRanges(indices);
 };

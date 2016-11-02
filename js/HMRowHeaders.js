@@ -142,6 +142,28 @@ HMRowHeaders.prototype.search = function(query) {
     return indices;
 };
 
+HMRowHeaders.prototype.filter = function(query) {
+    if (!query) { return []; }
+
+    query = query.toLowerCase();
+    var indices = [];
+    for (var i = 0; i < this.rowHeaders.length; ++i) {
+        if (Array.isArray(this.rowHeaders[i])) {
+            for(var j = 0; j < this.rowHeaders[i].length; ++j) {
+                if (this.rowHeaders[i][j].toLowerCase().indexOf(query) > -1) {
+                  indices.push(i);
+                  break;
+                }
+            }
+        } else {
+            if (this.rowHeaders[i].toLowerCase().indexOf(query) > -1) {
+              indices.push(i);
+            }
+        }
+    }
+    return indices;
+};
+
 HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;

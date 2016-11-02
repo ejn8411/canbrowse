@@ -167,6 +167,11 @@ HMHeatmap.prototype.clear = function() {
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 };
 
+HMHeatmap.prototype.clearSearchHighlights = function() {
+    this.highlightedSearchIndices = [];
+    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+};
+
 HMHeatmap.prototype.setScrollX = function(scrollX) {
     this.scrollX = scrollX;
 };

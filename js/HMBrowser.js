@@ -31,6 +31,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
     this.scrollingY = false;
     this.needsHorizScroll = false;
     this.needsVertScroll = false;
+    this.currSearchQuery = '';
     this.searchProvider = new HMsearchProvider();
     this.settings = settings || { labelTextPadding: 4,
                                   cellWidth: 20,
@@ -237,6 +238,7 @@ HMBrowser.prototype.zoomExact = function(zoom) {
 };
 
 HMBrowser.prototype.searchRows = function(query) {
+    this.currSearchQuery = query;
     var indices = this.searchProvider.search(this.rowHeads.filteredRowHeaders, query);
     this.rowHeads.searchHighlightHeaders(indices);
     this.heatmap.searchHighlightCellRanges(indices);
@@ -244,8 +246,11 @@ HMBrowser.prototype.searchRows = function(query) {
 
 HMBrowser.prototype.filterRows = function(query) {
     var indices = this.searchProvider.search(this.rowHeaders, query);
+    this.rowHeads.clearSearchHighlights();
+    this.heatmap.clearSearchHighlights();
     this.rowHeads.searchFilterHeaders(indices);
     this.heatmap.searchFilterCellRanges(indices);
+    this.searchRows(this.currSearchQuery);
     this.onZoom();
     this.redraw();
 };

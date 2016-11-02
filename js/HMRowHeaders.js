@@ -151,6 +151,7 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
 
+    if (!indices) { this.highlightedSearchIndices = []; return; }
     this.highlightedSearchIndices = indices;
 
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
@@ -183,6 +184,11 @@ HMRowHeaders.prototype.clear = function() {
     this.rowHeaderTitleCtx.clearRect(0, 0, this.rowHeaderTitleCanv.width, this.rowHeaderTitleCanv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+};
+
+HMRowHeaders.prototype.clearSearchHighlights = function() {
+    this.highlightedSearchIndices = [];
+    this.highlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 };
 
 HMRowHeaders.prototype.clearHighlights = function() {

@@ -155,7 +155,7 @@ HMBrowser.prototype.showTooltip = function (placementX, placementY, i, j) {
         this.tooltipDiv.style.top = placementY + 'px';
         this.tooltipDiv.style.left = placementX + 'px';
     }
-    this.settings.renderToolTip(i, j);
+    this.settings.renderToolTip(i, j, this.rowHeads.filteredRowHeaders, this.colHeads.colHeaders, this.heatmap.filteredData);
     this.tooltipDiv.style.display = 'block';
 }
 
@@ -180,7 +180,7 @@ HMBrowser.prototype.onZoom = function() {
         this.width = this.maxWidth;
     }
 
-    this.height = (this.numRows * this.settings.cellHeight * this.zoom) + this.hmTL.top;
+    this.height = ((this.rowHeads.filteredRowHeaders.length) * this.settings.cellHeight * this.zoom) + this.hmTL.top;
     if (this.height > this.maxHeight) {
         this.needsVertScroll = true;
         this.height = this.maxHeight;
@@ -237,10 +237,17 @@ HMBrowser.prototype.zoomExact = function(zoom) {
 };
 
 HMBrowser.prototype.searchRows = function(query) {
-    var indices = this.searchProvider.search(this.rowHeaders, query);
-    //var indices = this.rowHeads.search(query);
+    var indices = this.searchProvider.search(this.rowHeads.filteredRowHeaders, query);
     this.rowHeads.searchHighlightHeaders(indices);
     this.heatmap.searchHighlightCellRanges(indices);
+};
+
+HMBrowser.prototype.filterRows = function(query) {
+    var indices = this.searchProvider.search(this.rowHeaders, query);
+    this.rowHeads.searchFilterHeaders(indices);
+    this.heatmap.searchFilterCellRanges(indices);
+    this.onZoom();
+    this.redraw();
 };
 
 HMBrowser.prototype.onMouseOut = function() {
@@ -251,7 +258,7 @@ HMBrowser.prototype.onMouseOut = function() {
 
 HMBrowser.prototype.onScrollY = function(scrollY) {
     // Convert to scroll in terms of heatmap
-    var wholeMapHeight = this.settings.cellHeight * this.zoom * this.numRows;
+    var wholeMapHeight = this.settings.cellHeight * this.zoom * this.rowHeads.filteredRowHeaders.length;
     var convRatio = wholeMapHeight/this.vertScroll.height;
     scrollY = scrollY * convRatio;
 

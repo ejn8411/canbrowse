@@ -4,7 +4,7 @@
 <h3>Test Canvas</h3>
 <div id="browseToolbar">
   <small>Search: </small><input type="text" name="searchQuery" onchange="br.searchRows(this.value);" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
-  <small>Filter: </small><input type="text" name="filterQuery">
+  <small>Filter: </small><input type="text" name="filterQuery" onchange="br.filterRows(this.value);" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
   <small>Zoom: </small><input id="zoomRange" type="range" value="1.0" oninput="br.zoomExact(this.value);" min="0.01" max="10" step="0.01"/><button type="button" onclick="document.getElementById('zoomRange').value = 1.0; br.zoomExact(1.0)">Default</button>
   <!--<button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>-->
 </div>
@@ -90,15 +90,15 @@ for(var i = 0; i < numrows; ++i) {
 document.onselectstart = function(){ return false; }
 
 var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, rowHeaderTitles, colHeads, data);
-br.settings.renderToolTip = function (i, j) {
+br.settings.renderToolTip = function (i, j, filteredRowHeads, filteredColHeads, filteredData) {
   var tooltip = document.getElementById('canvToolTip');
-  tooltip.innerHTML = ['<h3 class="gene">' + rowHeads[i][0] + '</h3>',
-                       '<h3 class="name">' + rowHeads[i][1] + '</h3>',
+  tooltip.innerHTML = ['<h3 class="gene">' + filteredRowHeads[i][0] + '</h3>',
+                       '<h3 class="name">' + filteredRowHeads[i][1] + '</h3>',
                        '<p class="condition">',
-                         '<span class="condition">' + colHeads[j] + '</span>',
+                         '<span class="condition">' + filteredColHeads[j] + '</span>',
                        '</p>',
                        '<p>',
-                         '<span>Log fold change: ' + data[i][j] + '</span>',
+                         '<span>Log fold change: ' + filteredData[i][j] + '</span>',
                        '</p>'].join('');
 };
 br.init();

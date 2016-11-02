@@ -101,7 +101,7 @@ HMVertScrollBar.prototype.redraw = function() {
 
 HMVertScrollBar.prototype.render = function() {
     var hmHeight = this.browser.getHeatmapHeight();
-    var perc = getCoveragePerc(hmHeight, this.browser.numRows * this.browser.settings.cellHeight * this.browser.zoom);
+    var perc = getCoveragePerc(hmHeight, this.browser.rowHeads.filteredRowHeaders.length * this.browser.settings.cellHeight * this.browser.zoom);
     this.scrollerHeight = perc * this.height;
     this.scrollYCtx.fillStyle = this.scrollerFill;
     this.scrollYCtx.fillRect(0, this.scrollY, this.width, this.scrollerHeight);

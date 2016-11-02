@@ -3,9 +3,11 @@ function HMRowHeaders(hmBr, width, height, rowHeaders, rowHeaderTitles) {
     this.width = width;
     this.height = height;
     this.rowHeaders = rowHeaders;
+    this.filteredRowHeaders = rowHeaders;
     this.rowHeaderTitles = rowHeaderTitles;
     this.scrollY = 0;
     this.highlightedSearchIndices = [];
+    this.filteredIndices = [];
     this.headerWidths = Array.isArray(rowHeaders[0])? Array.apply(null, Array(rowHeaders[0].length)).map(Number.prototype.valueOf,0) : [];
     this.approxHeaderHeights = this.browser.settings.rowFontSizePt * 1.5;
 }
@@ -60,10 +62,13 @@ HMRowHeaders.prototype.getMaxWidth = function(textMat, ctx) {
 };
 
 HMRowHeaders.prototype.inView = function(i) {
-  var ch = this.browser.settings.cellHeight * this.browser.zoom;
-  var elem = {top: ch*i, bot: ch*(i+1) };
-  var view = {top: this.scrollY, bot: this.browser.heatmap.height + this.scrollY};
-  return !( elem.bot < view.top || elem.top > view.bot );
+    //var filteredIndex = this.filteredIndices.indexOf(i);
+    //if (filteredIndex < 0) return false;
+
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    var elem = {top: ch*i, bot: ch*(i+1) };
+    var view = {top: this.scrollY, bot: this.browser.heatmap.height + this.scrollY};
+    return !( elem.bot < view.top || elem.top > view.bot );
 };
 
 HMRowHeaders.prototype.renderTitles = function() {
@@ -82,20 +87,20 @@ HMRowHeaders.prototype.render = function() {
     if (this.approxHeaderHeights <= ch) {
         this.renderTitles();
         this.rowHeaderCtx.textBaseline = 'middle';
-        for(var i = 0; i < this.rowHeaders.length; ++i) {
+        for(var i = 0; i < this.filteredRowHeaders.length; ++i) {
             if (!this.inView(i)) continue;
 
-            if (Array.isArray(this.rowHeaders[0])) {
+            if (Array.isArray(this.filteredRowHeaders[0])) {
                 this.rowHeaderCtx.textAlign = 'center';
                 var currWidth = 0;
                 // Render the first col then loop through any remaining
-                this.rowHeaderCtx.fillText(this.rowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
-                for(var j = 1; j < this.rowHeaders[i].length; ++j) {
+                this.rowHeaderCtx.fillText(this.filteredRowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                for(var j = 1; j < this.filteredRowHeaders[i].length; ++j) {
                     currWidth += this.headerWidths[j-1];
-                    this.rowHeaderCtx.fillText(this.rowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                    this.rowHeaderCtx.fillText(this.filteredRowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
                 }
             } else {
-                this.rowHeaderCtx.fillText(this.rowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                this.rowHeaderCtx.fillText(this.filteredRowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
             }
         }
     }
@@ -142,28 +147,6 @@ HMRowHeaders.prototype.search = function(query) {
     return indices;
 };
 
-HMRowHeaders.prototype.filter = function(query) {
-    if (!query) { return []; }
-
-    query = query.toLowerCase();
-    var indices = [];
-    for (var i = 0; i < this.rowHeaders.length; ++i) {
-        if (Array.isArray(this.rowHeaders[i])) {
-            for(var j = 0; j < this.rowHeaders[i].length; ++j) {
-                if (this.rowHeaders[i][j].toLowerCase().indexOf(query) > -1) {
-                  indices.push(i);
-                  break;
-                }
-            }
-        } else {
-            if (this.rowHeaders[i].toLowerCase().indexOf(query) > -1) {
-              indices.push(i);
-            }
-        }
-    }
-    return indices;
-};
-
 HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
@@ -175,6 +158,19 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     for (var i = 0; i < indices.length; ++i) {
         var idx = indices[i];
         this.searchHighlightCtx.fillRect(0, (ch*idx) + this.browser.hmTL.top - this.scrollY, this.width, ch);
+    }
+};
+
+HMRowHeaders.prototype.searchFilterHeaders = function(indices) {
+    if (indices) {
+        this.filteredIndices = indices;
+        this.filteredRowHeaders = [];
+        for (var i = 0; i < indices.length; ++i) {
+            this.filteredRowHeaders.push(this.rowHeaders[indices[i]]);
+        }
+    } else {
+        this.filteredIndices = [];
+        this.filteredRowHeaders = this.rowHeaders;
     }
 };
 

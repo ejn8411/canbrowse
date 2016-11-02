@@ -98,12 +98,12 @@ HMsearchProvider.prototype.search = function (data, query) {
     try {
         tree = this.parseQueryString(query);
     } catch (e) {
-        return [];
+        return null;
     }
 
     if (tree !== null) {
         this.loadMatches(tree, data);
         return this.getIndices(tree);
     }
-    return [];
+    return null;
 };

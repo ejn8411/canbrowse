@@ -8,6 +8,8 @@ function HMHeatmap(hmBr, width, height, data, numRows, numCols, tlStart) {
     this.numRows = numRows;
     this.numCols = numCols;
     this.tlStart = tlStart;
+    this.filteredIndices = [];
+    this.filteredData = this.data;
     this.highlightedSearchIndices = [];
 }
 
@@ -146,6 +148,19 @@ HMHeatmap.prototype.searchHighlightCellRanges = function(indices) {
     }
 };
 
+HMHeatmap.prototype.searchFilterCellRanges = function(indices) {
+    if (indices) {
+        this.filteredIndices = indices;
+        this.filteredData = [];
+        for (var i = 0; i < indices.length; ++i) {
+            this.filteredData.push(this.data[indices[i]]);
+        }
+    } else {
+        this.filteredIndices = [];
+        this.filteredData = this.data;
+    }
+};
+
 HMHeatmap.prototype.clear = function() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
@@ -173,10 +188,10 @@ HMHeatmap.prototype.onScrollY = function(scrollY) {
 HMHeatmap.prototype.render = function() {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
-    for(var i = 0; i < this.numRows; ++i) {
+    for(var i = 0; i < this.filteredData.length; ++i) {
         for(var j = 0; j < this.numCols; ++j) {
             if (this.browser.inVisibleArea(i, j)) {
-                this.ctx.fillStyle= this.data[i][j];
+                this.ctx.fillStyle= this.filteredData[i][j];
                 this.ctx.fillRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
             }
         }

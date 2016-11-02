@@ -32,7 +32,7 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
     this.needsHorizScroll = false;
     this.needsVertScroll = false;
     this.currSearchQuery = '';
-    this.searchProvider = new HMsearchProvider();
+    this.searchProvider = new HMSearchProvider();
     this.settings = settings || { labelTextPadding: 4,
                                   cellWidth: 20,
                                   cellHeight: 20,

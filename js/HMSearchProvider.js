@@ -1,7 +1,7 @@
-function HMsearchProvider() {
+function HMSearchProvider() {
 }
 
-HMsearchProvider.prototype.parseQueryString = function (query) {
+HMSearchProvider.prototype.parseQueryString = function (query) {
     var parser = window.PARSER;
     var matches = parser.parse(query);
     if (matches.length) {
@@ -10,7 +10,7 @@ HMsearchProvider.prototype.parseQueryString = function (query) {
     return null;
 };
 
-HMsearchProvider.prototype.loadMatches = function (tree, data) {
+HMSearchProvider.prototype.loadMatches = function (tree, data) {
     // Leaf
     if (!tree.op) {
         tree.matches = [];
@@ -21,7 +21,7 @@ HMsearchProvider.prototype.loadMatches = function (tree, data) {
     }
 };
 
-HMsearchProvider.prototype.findMatches = function (treeElem, term, data) {
+HMSearchProvider.prototype.findMatches = function (treeElem, term, data) {
     var lowerTerm = term.toLowerCase();
     for(var i = 0; i < data.length; ++i) {
         if (Array.isArray(data[i])) {
@@ -43,7 +43,7 @@ HMsearchProvider.prototype.findMatches = function (treeElem, term, data) {
 };
 
 // Assuming these arrays are sorted
-HMsearchProvider.prototype.intersection = function (a, b) {
+HMSearchProvider.prototype.intersection = function (a, b) {
     var ai=0, bi=0;
     var result = [];
 
@@ -63,7 +63,7 @@ HMsearchProvider.prototype.intersection = function (a, b) {
 };
 
 // Assuming these arrays are sorted
-HMsearchProvider.prototype.union = function (a, b) {
+HMSearchProvider.prototype.union = function (a, b) {
     var map = {};
 
     // Build maps
@@ -77,7 +77,7 @@ HMsearchProvider.prototype.union = function (a, b) {
     return result;
 };
 
-HMsearchProvider.prototype.getIndices = function (tree) {
+HMSearchProvider.prototype.getIndices = function (tree) {
     // Leaf
     if (!tree.op) {
         return tree.matches;
@@ -93,7 +93,7 @@ HMsearchProvider.prototype.getIndices = function (tree) {
     }
 };
 
-HMsearchProvider.prototype.search = function (data, query) {
+HMSearchProvider.prototype.search = function (data, query) {
     var tree = null;
     try {
         tree = this.parseQueryString(query);

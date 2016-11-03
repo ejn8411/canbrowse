@@ -53,7 +53,9 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
                                   highlightScrollerFill: '#999',
                                   highlightCellColor: '#CC0000',
                                   highlightCellLineWidth: 1,
-                                  renderToolTip: function() {},
+                                  hiddenRowHeaderInds: {},
+                                  renderHMToolTip: function() {},
+                                  renderRHToolTip: function() {},
                                   getColorForHMVal: function(value) {
                                     return 'rgb(' + (value % 256) + ',' + (value % 256) + ',' + (value % 256)  + ')';
                                   },
@@ -150,7 +152,7 @@ HMBrowser.prototype.getHeatmapWidth = function() {
     return this.maxWidth - this.hmTL.left - extra;
 };
 
-HMBrowser.prototype.showTooltip = function (placementX, placementY, i, j) {
+HMBrowser.prototype.showHMTooltip = function (placementX, placementY, i, j) {
     var cw = this.settings.cellWidth * this.zoom;
     var ch = this.settings.cellHeight * this.zoom;
     if (placementX + this.tooltipDiv.offsetWidth > this.maxWidth) {
@@ -160,7 +162,21 @@ HMBrowser.prototype.showTooltip = function (placementX, placementY, i, j) {
         this.tooltipDiv.style.top = placementY + 'px';
         this.tooltipDiv.style.left = placementX + 'px';
     }
-    this.settings.renderToolTip(i, j, this.rowHeads.filteredRowHeaders, this.colHeads.colHeaders, this.heatmap.filteredData);
+    this.settings.renderHMToolTip(i, j, this.rowHeads.filteredRowHeaders, this.colHeads.colHeaders, this.heatmap.filteredData);
+    this.tooltipDiv.style.display = 'block';
+}
+
+HMBrowser.prototype.showRHTooltip = function (placementX, placementY, i) {
+    var cw = this.settings.cellWidth * this.zoom;
+    var ch = this.settings.cellHeight * this.zoom;
+    if (placementX + this.tooltipDiv.offsetWidth > this.maxWidth) {
+        this.tooltipDiv.style.top = placementY - this.tooltipDiv.offsetHeight - ch + 'px';
+        this.tooltipDiv.style.left = placementX - this.tooltipDiv.offsetWidth - cw + 'px';
+    } else {
+        this.tooltipDiv.style.top = placementY + 'px';
+        this.tooltipDiv.style.left = placementX + 'px';
+    }
+    this.settings.renderRHToolTip(i, this.rowHeads.filteredRowHeaders, this.heatmap.filteredData);
     this.tooltipDiv.style.display = 'block';
 }
 

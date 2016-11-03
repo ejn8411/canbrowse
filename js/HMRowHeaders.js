@@ -40,9 +40,13 @@ HMRowHeaders.prototype.init = function() {
     this.searchHighlightCanv.onmousemove = function(e) {
         var evt = e || event;
         var ch = hmRH.browser.settings.cellHeight * hmRH.browser.zoom;
+        var cw = hmRH.browser.settings.cellWidth * hmRH.browser.zoom;
         var i = Math.floor(((e.offsetY - hmRH.browser.hmTL.top) + hmRH.scrollY)/ch);
         hmRH.highlightHeader(i,0);
         hmRH.browser.heatmap.highlightRow(i);
+        var placementX = hmRH.browser.hmTL.left;
+        var placementY = ((ch*i)-hmRH.scrollY) + hmRH.browser.hmTL.top + cw;
+        hmRH.browser.showRHTooltip(placementX, placementY, i);
         //HMHeat.highlightCell(evt.offsetX, evt.offsetY);
     };
     this.searchHighlightCanv.onmouseout = function(e) {
@@ -55,7 +59,7 @@ HMRowHeaders.prototype.init = function() {
         var evt = e || event;
         var ch = hmRH.browser.settings.cellHeight * hmRH.browser.zoom;
         var i = Math.floor(((e.offsetY - hmRH.browser.hmTL.top) + hmRH.scrollY)/ch);
-        hmRH.browser.settings.onRowHeadClick(i, hmRH.rowHeaders[i], hmRH.browser.data[i]);
+        hmRH.browser.settings.onRowHeadClick(i, hmRH.filteredRowHeaders[i], hmRH.browser.heatmap.filteredData[i]);
     };
 };
 
@@ -65,6 +69,7 @@ HMRowHeaders.prototype.getMaxWidth = function(textMat, ctx) {
         var colWidths = 0;
         if (Array.isArray(textMat[i])) {
             for(var j = 0; j < textMat[i].length; ++j) {
+                if (this.browser.settings.hiddenRowHeaderInds[j]) continue;
                 var curr = ctx.measureText(textMat[i][j]).width + (2*this.browser.settings.labelTextPadding);
                 var header = (this.rowHeaderTitles[j]) ? this.rowHeaderTitleCtx.measureText(this.rowHeaderTitles[j]).width + (2*this.browser.settings.labelTextPadding) : 0;
                 this.headerWidths[j] = Math.max(Math.max(curr, this.headerWidths[j]), header);
@@ -96,6 +101,7 @@ HMRowHeaders.prototype.renderTitles = function() {
     this.rowHeaderTitleCtx.textAlign = 'center';
     var currWidth = 0;
     for(var i = 0; i < this.rowHeaderTitles.length; ++i) {
+        if (this.browser.settings.hiddenRowHeaderInds[i]) continue;
         this.rowHeaderTitleCtx.fillText(this.rowHeaderTitles[i], (currWidth) + (this.headerWidths[i]/2), this.browser.hmTL.top);
         currWidth += this.headerWidths[i];
     }
@@ -116,6 +122,8 @@ HMRowHeaders.prototype.render = function() {
                 // Render the first col then loop through any remaining
                 this.rowHeaderCtx.fillText(this.filteredRowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
                 for(var j = 1; j < this.filteredRowHeaders[i].length; ++j) {
+                    if (this.browser.settings.hiddenRowHeaderInds[j]) continue;
+
                     currWidth += this.headerWidths[j-1];
                     this.rowHeaderCtx.fillText(this.filteredRowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
                 }

@@ -103,7 +103,7 @@ HMHeatmap.prototype.highlightCell = function(x, y) {
     // Tooltip
     var placementX = ((cw*j)-this.scrollX) + this.browser.hmTL.left + ch;
     var placementY = ((ch*i)-this.scrollY) + this.browser.hmTL.top + cw;
-    this.browser.showTooltip(placementX, placementY, i, j);
+    this.browser.showHMTooltip(placementX, placementY, i, j);
 
     // Draw highlight lines
     // Vertical

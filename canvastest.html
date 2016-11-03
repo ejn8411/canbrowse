@@ -60,6 +60,12 @@ for(var i = 0; i < numrows; ++i) {
     var cols = [];
     cols.push('Rv' + pad(i, 4));
     cols.push('a'+(i%26));
+
+    if (i > 5) {
+      cols.push('THIS IS SOME LONG TEXT A DESCRIPTION FOR A GENE ' + i);
+    } else {
+      cols.push(''+i);
+    }
     rowHeads.push(cols);
     //rowHeads.push(''+i);
 }
@@ -92,25 +98,34 @@ for(var i = 0; i < numrows; ++i) {
 document.onselectstart = function(){ return false; }
 
 var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, rowHeaderTitles, colHeads, data);
-br.settings.onRowHeadClick = function(index, rowHeads, data) {
-    window.alert(rowHeads[0]);
+br.settings.hiddenRowHeaderInds = {2 : true};
+br.settings.onRowHeadClick = function(index, filteredRowHeads, filteredData) {
+    window.alert(filteredRowHeads[0]);
 };
 br.settings.getColorForHMVal = function(value) {
-  if (value < 0) {
-      return 'rgb(' + Math.floor((1+value)*255) + ',' + Math.floor((1+value)*255) + ', 255)';
-  } else {
-      return 'rgb(255,255,' + Math.floor((1 - value)*255) + ')';
-  }
+    if (value < 0) {
+        return 'rgb(' + Math.floor((1+value)*255) + ',' + Math.floor((1+value)*255) + ', 255)';
+    } else {
+        return 'rgb(255,255,' + Math.floor((1 - value)*255) + ')';
+    }
 };
-br.settings.renderToolTip = function (i, j, filteredRowHeads, filteredColHeads, filteredData) {
+br.settings.renderHMToolTip = function (i, j, filteredRowHeads, filteredColHeads, filteredData) {
+    var tooltip = document.getElementById('canvToolTip');
+    tooltip.innerHTML = ['<h3 class="gene">' + filteredRowHeads[i][0] + '</h3>',
+                           '<h3 class="name">(' + filteredRowHeads[i][1] + ')</h3>',
+                           '<p class="condition">',
+                             '<span class="condition">' + filteredColHeads[j] + '</span>',
+                           '</p>',
+                           '<p>',
+                             '<span>Log fold change: ' + filteredData[i][j].toFixed(3) + '</span>',
+                           '</p>'].join('');
+};
+br.settings.renderRHToolTip = function(i, filteredRowHeads, filteredData) {
   var tooltip = document.getElementById('canvToolTip');
   tooltip.innerHTML = ['<h3 class="gene">' + filteredRowHeads[i][0] + '</h3>',
-                         '<h3 class="name">' + filteredRowHeads[i][1] + '</h3>',
+                         '<h3 class="name">(' + filteredRowHeads[i][1] + ')</h3>',
                          '<p class="condition">',
-                           '<span class="condition">' + filteredColHeads[j] + '</span>',
-                         '</p>',
-                         '<p>',
-                           '<span>Log fold change: ' + filteredData[i][j].toFixed(3) + '</span>',
+                           '<span class="condition">' + filteredRowHeads[i][2] + '</span>',
                          '</p>'].join('');
 };
 br.init();

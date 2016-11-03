@@ -246,8 +246,6 @@ HMBrowser.prototype.searchRows = function(query) {
 
 HMBrowser.prototype.filterRows = function(query) {
     var indices = this.searchProvider.search(this.rowHeaders, query);
-    this.rowHeads.clearSearchHighlights();
-    this.heatmap.clearSearchHighlights();
     this.rowHeads.searchFilterHeaders(indices);
     this.heatmap.searchFilterCellRanges(indices);
     this.searchRows(this.currSearchQuery);

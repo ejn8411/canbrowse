@@ -151,12 +151,11 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
 
-    if (!indices) { this.highlightedSearchIndices = []; return; }
-    this.highlightedSearchIndices = indices;
+    this.highlightedSearchIndices = (indices) ? indices : [];
 
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
 
-    for (var i = 0; i < indices.length; ++i) {
+    for (var i = 0; i < this.highlightedSearchIndices.length; ++i) {
         var idx = indices[i];
         this.searchHighlightCtx.fillRect(0, (ch*idx) + this.browser.hmTL.top - this.scrollY, this.width, ch);
     }

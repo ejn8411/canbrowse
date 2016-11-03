@@ -13,7 +13,7 @@ function HMRowHeaders(hmBr, width, height, rowHeaders, rowHeaderTitles) {
 }
 
 HMRowHeaders.prototype.init = function() {
-    var hmBr = this;
+    var hmRH = this;
     this.rowHeaderCanv = createCanvas('hmRowHeadCanvas', 0, this.height, 'position: absolute; left: 0');
     this.rowHeaderTitleCanv = createCanvas('hmRowHeadTitleCanvas', 0, this.height, 'position: absolute; left: 0, top: 0');
     this.highlightCanv = createCanvas('hmRowHeadHighlightCanvas', 0, this.height, 'position: absolute; left: 0');
@@ -37,6 +37,26 @@ HMRowHeaders.prototype.init = function() {
     this.rowHeaderCanv.width = this.width;
     this.highlightCanv.width = this.width;
     this.searchHighlightCanv.width = this.width;
+    this.searchHighlightCanv.onmousemove = function(e) {
+        var evt = e || event;
+        var ch = hmRH.browser.settings.cellHeight * hmRH.browser.zoom;
+        var i = Math.floor(((e.offsetY - hmRH.browser.hmTL.top) + hmRH.scrollY)/ch);
+        hmRH.highlightHeader(i,0);
+        hmRH.browser.heatmap.highlightRow(i);
+        //HMHeat.highlightCell(evt.offsetX, evt.offsetY);
+    };
+    this.searchHighlightCanv.onmouseout = function(e) {
+        hmRH.clearHighlights();
+        hmRH.browser.heatmap.clearHighlights();
+        //HMHeat.highlightCtx.clearRect(0, 0, HMHeat.highlightCanv.width, HMHeat.highlightCanv.height);
+        //HMHeat.browser.onMouseOut();
+    };
+    this.searchHighlightCanv.onclick = function(e) {
+        var evt = e || event;
+        var ch = hmRH.browser.settings.cellHeight * hmRH.browser.zoom;
+        var i = Math.floor(((e.offsetY - hmRH.browser.hmTL.top) + hmRH.scrollY)/ch);
+        hmRH.browser.settings.onRowHeadClick(i, hmRH.rowHeaders[i], hmRH.browser.data[i]);
+    };
 };
 
 HMRowHeaders.prototype.getMaxWidth = function(textMat, ctx) {

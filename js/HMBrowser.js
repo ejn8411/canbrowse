@@ -56,7 +56,8 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
                                   renderToolTip: function() {},
                                   getColorForHMVal: function(value) {
                                     return 'rgb(' + (value % 256) + ',' + (value % 256) + ',' + (value % 256)  + ')';
-                                  }
+                                  },
+                                  onRowHeadClick: function() {}
                                 };
 }
 

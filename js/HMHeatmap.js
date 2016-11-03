@@ -61,6 +61,34 @@ HMHeatmap.prototype.setHeight = function(height) {
     this.searchHighlightCtx.globalAlpha = this.browser.settings.highlightSearchStrokeOpacity;
 };
 
+HMHeatmap.prototype.highlightRow = function(i) {
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.highlightCtx.beginPath();
+    this.highlightCtx.moveTo(0, (ch*i)-this.scrollY);
+    this.highlightCtx.lineTo(this.width, (ch*i)-this.scrollY);
+    this.highlightCtx.stroke();
+
+    this.highlightCtx.beginPath();
+    this.highlightCtx.moveTo(0, (ch*(i+1))-this.scrollY);
+    this.highlightCtx.lineTo(this.width, (ch*(i+1))-this.scrollY);
+    this.highlightCtx.stroke();
+};
+
+HMHeatmap.prototype.highlightCol = function(j) {
+    var cw = this.browser.settings.cellWidth * this.browser.zoom;
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
+    this.highlightCtx.beginPath();
+    this.highlightCtx.moveTo((cw*j)-this.scrollX, 0);
+    this.highlightCtx.lineTo((cw*j)-this.scrollX, this.height);
+    this.highlightCtx.stroke();
+
+    this.highlightCtx.beginPath();
+    this.highlightCtx.moveTo((cw*(j+1))-this.scrollX, 0);
+    this.highlightCtx.lineTo((cw*(j+1))-this.scrollX, this.height);
+    this.highlightCtx.stroke();
+};
+
 HMHeatmap.prototype.highlightCell = function(x, y) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
@@ -165,6 +193,10 @@ HMHeatmap.prototype.clear = function() {
     this.ctx.clearRect(0, 0, this.canv.width, this.canv.height);
     this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
     this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+};
+
+HMHeatmap.prototype.clearHighlights = function() {
+    this.highlightCtx.clearRect(0, 0, this.highlightCanv.width, this.highlightCanv.height);
 };
 
 HMHeatmap.prototype.clearSearchHighlights = function() {

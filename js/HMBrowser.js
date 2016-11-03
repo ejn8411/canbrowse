@@ -53,7 +53,10 @@ function HMBrowser(parentDiv, tooltipDiv, rowHeaders, rowHeaderTitles, colHeader
                                   highlightScrollerFill: '#999',
                                   highlightCellColor: '#CC0000',
                                   highlightCellLineWidth: 1,
-                                  renderToolTip: function() {}
+                                  renderToolTip: function() {},
+                                  getColorForHMVal: function(value) {
+                                    return 'rgb(' + (value % 256) + ',' + (value % 256) + ',' + (value % 256)  + ')';
+                                  }
                                 };
 }
 

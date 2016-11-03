@@ -78,11 +78,12 @@ for(var i = 0; i < numrows; ++i) {
     row = [];
     for(var j = 0; j < numcols; ++j) {
         var rand = (Math.random() * 2) - 1;
-        if (rand < 0) {
-            row.push('rgb(' + Math.floor((1+rand)*255) + ',' + Math.floor((1+rand)*255) + ', 255)');
-        } else {
-            row.push('rgb(255,255,' + Math.floor((1 - rand)*255) + ')');
-        }
+        //if (rand < 0) {
+        //    row.push('rgb(' + Math.floor((1+rand)*255) + ',' + Math.floor((1+rand)*255) + ', 255)');
+        //} else {
+        //    row.push('rgb(255,255,' + Math.floor((1 - rand)*255) + ')');
+        //}
+        row.push(rand);
     }
     data.push(row);
 }
@@ -90,16 +91,23 @@ for(var i = 0; i < numrows; ++i) {
 document.onselectstart = function(){ return false; }
 
 var br = new HMBrowser(document.getElementById('testCanv'), document.getElementById('canvToolTip'), rowHeads, rowHeaderTitles, colHeads, data);
+br.settings.getColorForHMVal = function(value) {
+  if (value < 0) {
+      return 'rgb(' + Math.floor((1+value)*255) + ',' + Math.floor((1+value)*255) + ', 255)';
+  } else {
+      return 'rgb(255,255,' + Math.floor((1 - value)*255) + ')';
+  }
+};
 br.settings.renderToolTip = function (i, j, filteredRowHeads, filteredColHeads, filteredData) {
   var tooltip = document.getElementById('canvToolTip');
   tooltip.innerHTML = ['<h3 class="gene">' + filteredRowHeads[i][0] + '</h3>',
-                       '<h3 class="name">' + filteredRowHeads[i][1] + '</h3>',
-                       '<p class="condition">',
-                         '<span class="condition">' + filteredColHeads[j] + '</span>',
-                       '</p>',
-                       '<p>',
-                         '<span>Log fold change: ' + filteredData[i][j] + '</span>',
-                       '</p>'].join('');
+                         '<h3 class="name">' + filteredRowHeads[i][1] + '</h3>',
+                         '<p class="condition">',
+                           '<span class="condition">' + filteredColHeads[j] + '</span>',
+                         '</p>',
+                         '<p>',
+                           '<span>Log fold change: ' + filteredData[i][j].toFixed(3) + '</span>',
+                         '</p>'].join('');
 };
 br.init();
 br.render();

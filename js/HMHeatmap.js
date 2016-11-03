@@ -196,7 +196,7 @@ HMHeatmap.prototype.render = function() {
     for(var i = 0; i < this.filteredData.length; ++i) {
         for(var j = 0; j < this.numCols; ++j) {
             if (this.browser.inVisibleArea(i, j)) {
-                this.ctx.fillStyle= this.filteredData[i][j];
+                this.ctx.fillStyle= this.browser.settings.getColorForHMVal(this.filteredData[i][j]);
                 this.ctx.fillRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
             }
         }

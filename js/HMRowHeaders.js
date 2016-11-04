@@ -6,6 +6,7 @@ function HMRowHeaders(hmBr, width, height, rowHeaders, rowHeaderTitles) {
     this.filteredRowHeaders = rowHeaders;
     this.rowHeaderTitles = rowHeaderTitles;
     this.scrollY = 0;
+    this.currSearchIndex = -1;
     this.highlightedSearchIndices = [];
     this.filteredIndices = [];
     this.headerWidths = Array.isArray(rowHeaders[0])? Array.apply(null, Array(rowHeaders[0].length)).map(Number.prototype.valueOf,0) : [];
@@ -39,19 +40,23 @@ HMRowHeaders.prototype.init = function() {
     this.searchHighlightCanv.width = this.width;
     this.searchHighlightCanv.onmousemove = function(e) {
         var evt = e || event;
+
         var ch = hmRH.browser.settings.cellHeight * hmRH.browser.zoom;
         var cw = hmRH.browser.settings.cellWidth * hmRH.browser.zoom;
+
         var i = Math.floor(((e.offsetY - hmRH.browser.hmTL.top) + hmRH.scrollY)/ch);
-        hmRH.highlightHeader(i,0);
-        hmRH.browser.heatmap.highlightRow(i);
         var placementX = hmRH.browser.hmTL.left;
         var placementY = ((ch*i)-hmRH.scrollY) + hmRH.browser.hmTL.top + cw;
+
+        hmRH.highlightHeader(i,0);
+        hmRH.browser.heatmap.highlightRow(i);
         hmRH.browser.showRHTooltip(placementX, placementY, i);
         //HMHeat.highlightCell(evt.offsetX, evt.offsetY);
     };
     this.searchHighlightCanv.onmouseout = function(e) {
         hmRH.clearHighlights();
         hmRH.browser.heatmap.clearHighlights();
+        hmRH.browser.hideTooltip();
         //HMHeat.highlightCtx.clearRect(0, 0, HMHeat.highlightCanv.width, HMHeat.highlightCanv.height);
         //HMHeat.browser.onMouseOut();
     };
@@ -153,28 +158,6 @@ HMRowHeaders.prototype.highlightHeader = function(i, j) {
     this.highlightCtx.stroke();
 };
 
-HMRowHeaders.prototype.search = function(query) {
-    if (!query) { return []; }
-
-    query = query.toLowerCase();
-    var indices = [];
-    for (var i = 0; i < this.rowHeaders.length; ++i) {
-        if (Array.isArray(this.rowHeaders[i])) {
-            for(var j = 0; j < this.rowHeaders[i].length; ++j) {
-                if (this.rowHeaders[i][j].toLowerCase().indexOf(query) > -1) {
-                  indices.push(i);
-                  break;
-                }
-            }
-        } else {
-            if (this.rowHeaders[i].toLowerCase().indexOf(query) > -1) {
-              indices.push(i);
-            }
-        }
-    }
-    return indices;
-};
-
 HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
@@ -200,6 +183,24 @@ HMRowHeaders.prototype.searchFilterHeaders = function(indices) {
         this.filteredIndices = [];
         this.filteredRowHeaders = this.rowHeaders;
     }
+};
+
+HMRowHeaders.prototype.searchNext = function() {
+    if (!this.browser.needsVertScroll) return;
+
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+
+    this.currSearchIndex = ((this.currSearchIndex + 1) % this.highlightedSearchIndices.length);
+    this.scrollY = this.highlightedSearchIndices[this.currSearchIndex] * ch;
+};
+
+HMRowHeaders.prototype.searchPrev = function() {
+    if (!this.browser.needsVertScroll) return;
+
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+
+    this.currSearchIndex = (((this.currSearchIndex % this.highlightedSearchIndices.length) + this.highlightedSearchIndices.length - 1) % this.highlightedSearchIndices.length);
+    this.scrollY = this.highlightedSearchIndices[this.currSearchIndex] * ch;
 };
 
 HMRowHeaders.prototype.setScrollY = function(scrollY) {

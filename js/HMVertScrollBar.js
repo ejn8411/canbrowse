@@ -58,6 +58,7 @@ HMVertScrollBar.prototype.setHeight = function(height) {
 
 HMVertScrollBar.prototype.setScrollY = function(scrollY) {
     this.scrollY = scrollY;
+    this.redraw();
 };
 
 HMVertScrollBar.prototype.onScroller = function(evt) {

@@ -260,8 +260,43 @@ HMBrowser.prototype.zoomExact = function(zoom) {
 HMBrowser.prototype.searchRows = function(query) {
     this.currSearchQuery = query;
     var indices = this.searchProvider.search(this.rowHeads.filteredRowHeaders, query);
+    this.rowHeads.currSearchIndex = -1;
     this.rowHeads.searchHighlightHeaders(indices);
     this.heatmap.searchHighlightCellRanges(indices);
+};
+
+HMBrowser.prototype.searchNext = function() {
+    if (!this.rowHeads.highlightedSearchIndices.length) return;
+
+    this.rowHeads.searchNext();
+
+    // Update components
+    this.scrollY = this.rowHeads.scrollY;
+    this.heatmap.onScrollY(this.scrollY);
+    this.colHeads.onScrollY(this.scrollY);
+    this.rowHeads.onScrollY(this.scrollY);
+
+    // Convert to scroll in terms of scrollbar
+    var wholeMapHeight = this.settings.cellHeight * this.zoom * this.rowHeads.filteredRowHeaders.length;
+    var convRatio = this.vertScroll.height/wholeMapHeight;
+    this.vertScroll.setScrollY(this.scrollY * convRatio);
+};
+
+HMBrowser.prototype.searchPrev = function() {
+    if (!this.rowHeads.highlightedSearchIndices.length) return;
+
+    this.rowHeads.searchPrev();
+
+    // Update components
+    this.scrollY = this.rowHeads.scrollY;
+    this.heatmap.onScrollY(this.scrollY);
+    this.colHeads.onScrollY(this.scrollY);
+    this.rowHeads.onScrollY(this.scrollY);
+
+    // Convert to scroll in terms of scrollbar
+    var wholeMapHeight = this.settings.cellHeight * this.zoom * this.rowHeads.filteredRowHeaders.length;
+    var convRatio = this.vertScroll.height/wholeMapHeight;
+    this.vertScroll.setScrollY(this.scrollY * convRatio);
 };
 
 HMBrowser.prototype.filterRows = function(query) {

@@ -239,7 +239,7 @@ HMHeatmap.prototype.renderFull = function(width, height) {
     for(var i = 0; i < this.filteredData.length; ++i) {
         for(var j = 0; j < this.numCols; ++j) {
             ctx.fillStyle= this.browser.settings.getColorForHMVal(this.filteredData[i][j]);
-            ctx.fillRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
+            ctx.fillRect((cw*j), (ch*i), cw, ch);
         }
     }
     ctx.stroke();

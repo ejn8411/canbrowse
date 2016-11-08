@@ -152,9 +152,10 @@ HMHeatmap.prototype.indices2ranges = function(indices) {
     return ranges;
 };
 
-HMHeatmap.prototype.searchHighlightCellRanges = function(ctx, indices, clear, zoom) {
+HMHeatmap.prototype.searchHighlightCellRanges = function(ctx, indices, clear, zoom, scroll) {
     clear = clear != null ? clear : true;
     zoom = zoom != null ? zoom : true;
+    scroll = scroll != null ? scroll : true;
     var cw = this.browser.settings.cellWidth * (zoom ? this.browser.zoom : 1);
     var ch = this.browser.settings.cellHeight * (zoom ? this.browser.zoom : 1);
 
@@ -173,12 +174,12 @@ HMHeatmap.prototype.searchHighlightCellRanges = function(ctx, indices, clear, zo
 
         ctx.beginPath();
         ctx.moveTo(0, (ch*range.start)-this.scrollY);
-        ctx.lineTo(ctx.canvas.width, (ch*range.start)-this.scrollY);
+        ctx.lineTo(ctx.canvas.width, (ch*range.start) - (scroll ? this.scrollY : 0));
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(0, (ch*(range.end+1))-this.scrollY);
-        ctx.lineTo(ctx.canvas.width, (ch*(range.end+1))-this.scrollY);
+        ctx.lineTo(ctx.canvas.width, (ch*(range.end+1)) - (scroll ? this.scrollY : 0));
         ctx.stroke();
     }
 };
@@ -243,7 +244,7 @@ HMHeatmap.prototype.renderFull = function(width, height) {
         }
     }
     ctx.stroke();
-    this.searchHighlightCellRanges(ctx, this.highlightedSearchIndices, false, false);
+    this.searchHighlightCellRanges(ctx, this.highlightedSearchIndices, false, false, false);
     return fullCanv;
 };
 

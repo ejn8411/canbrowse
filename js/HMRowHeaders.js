@@ -128,19 +128,19 @@ HMRowHeaders.prototype.renderFull = function(width, height) {
                 ctx.textAlign = 'center';
                 var currWidth = 0;
                 // Render the first col then loop through any remaining
-                ctx.fillText(this.filteredRowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                ctx.fillText(this.filteredRowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top);
                 for(var j = 1; j < this.filteredRowHeaders[i].length; ++j) {
                     if (this.browser.settings.hiddenRowHeaderInds[j]) continue;
 
                     currWidth += this.headerWidths[j-1];
-                    ctx.fillText(this.filteredRowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                    ctx.fillText(this.filteredRowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top);
                 }
             } else {
-                ctx.fillText(this.filteredRowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                ctx.fillText(this.filteredRowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top);
             }
         }
     }
-    this.searchHighlightHeaders(ctx, this.highlightedSearchIndices, false, false);
+    this.searchHighlightHeaders(ctx, this.highlightedSearchIndices, false, false, false);
     return fullCanv;
 };
 
@@ -190,9 +190,10 @@ HMRowHeaders.prototype.highlightHeader = function(i, j) {
     this.highlightCtx.stroke();
 };
 
-HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear, zoom) {
+HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear, zoom, scroll) {
     clear = clear != null ? clear : true;
     zoom = zoom != null ? zoom : true;
+    scroll = scroll != null ? scroll : true;
     var cw = this.browser.settings.cellWidth * (zoom ? this.browser.zoom : 1);
     var ch = this.browser.settings.cellHeight * (zoom ? this.browser.zoom : 1);
 
@@ -207,7 +208,7 @@ HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear, zo
 
     for (var i = 0; i < this.highlightedSearchIndices.length; ++i) {
         var idx = indices[i];
-        ctx.fillRect(0, (ch*idx) + this.browser.hmTL.top - this.scrollY, this.width, ch);
+        ctx.fillRect(0, (ch*idx) + this.browser.hmTL.top - (scroll ? this.scrollY : 0), this.width, ch);
     }
 };
 

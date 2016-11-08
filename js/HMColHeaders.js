@@ -50,7 +50,7 @@ HMColHeaders.prototype.inView = function(i) {
 };
 
 HMColHeaders.prototype.renderFull = function(width, height) {
-    var cw = this.browser.settings.cellWidth * this.browser.zoom;
+    var cw = this.browser.settings.cellWidth;
     var fullCanv = createCanvas('hmRowHeadFullCanvas', width, height, '');
     var ctx = fullCanv.getContext("2d");
 

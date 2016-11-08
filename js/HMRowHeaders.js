@@ -114,7 +114,7 @@ HMRowHeaders.prototype.renderTitles = function(ctx) {
 };
 
 HMRowHeaders.prototype.renderFull = function(width, height) {
-    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    var ch = this.browser.settings.cellHeight;
     var fullCanv = createCanvas('hmRowHeadFullCanvas', width, height, '');
     var ctx = fullCanv.getContext("2d");
 
@@ -140,7 +140,7 @@ HMRowHeaders.prototype.renderFull = function(width, height) {
             }
         }
     }
-    this.searchHighlightHeaders(ctx, this.highlightedSearchIndices, false);
+    this.searchHighlightHeaders(ctx, this.highlightedSearchIndices, false, false);
     return fullCanv;
 };
 
@@ -190,10 +190,11 @@ HMRowHeaders.prototype.highlightHeader = function(i, j) {
     this.highlightCtx.stroke();
 };
 
-HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear) {
-    var cw = this.browser.settings.cellWidth * this.browser.zoom;
-    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear, zoom) {
     clear = clear != null ? clear : true;
+    zoom = zoom != null ? zoom : true;
+    var cw = this.browser.settings.cellWidth * (zoom ? this.browser.zoom : 1);
+    var ch = this.browser.settings.cellHeight * (zoom ? this.browser.zoom : 1);
 
     ctx.fillStyle = this.browser.settings.highlightSearchFill;
     ctx.globalAlpha = this.browser.settings.highlightSearchOpacity;

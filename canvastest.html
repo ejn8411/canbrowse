@@ -8,7 +8,7 @@
   <button type="button" onclick="br.searchPrev();"><i class="fa fa-chevron-up" aria-hidden="true"></i></button>
   <small>Filter: </small><input type="text" name="filterQuery" onchange="br.filterRows(this.value);" onkeyup="this.onchange();" onpaste="this.onchange();" oninput="this.onchange();">
   <small>Zoom: </small><input id="zoomRange" type="range" value="1.0" oninput="br.zoomExact(this.value);" min="0.01" max="10" step="0.01"/><button type="button" onclick="document.getElementById('zoomRange').value = 1.0; br.zoomExact(1.0)">Default</button>
-  <!--<button type="button" onclick="br.zoomIn()">+</button><button type="button" onclick="br.zoomOut()">-</button><button type="button" onclick="br.zoomExact(1.0)">100%</button>-->
+  <a id="downloadImageBtn" type="button" onclick="exportImage(br, this)"><i class="fa fa-picture-o" aria-hidden="true"></i></a>
 </div>
 <div id="testCanv">
   <div id="canvToolTip">
@@ -36,6 +36,7 @@
     #hmHighlightCanvas { z-index: 1; }
     #hmRowHeadSearchHighlightCanvas { cursor: pointer; }
     #hmTextOverflowCover1, #hmTextOverflowCover2, #hmTextOverflowCover3 { z-index: 1; background-color: #FFF; }
+    #downloadImageBtn { cursor: pointer; background-color: #ccc; color: black; padding: 5px; }
 </style>
 <link rel="stylesheet" href="font-awesome/css/font-awesome.min.css">
 <script type="text/javascript" src="js/parser.js"></script>
@@ -51,6 +52,17 @@ function pad(n, width, z) {
     z = z || '0';
     n = n + '';
     return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+}
+
+function exportImage(br, link) {
+    var image = br.exportImage();
+    if (!image) {
+        // ERROR
+        alert('The image would be too large');
+        return false;
+    }
+    link.href = image;
+    link.download = 'test.png';
 }
 
 var numrows = 4000;

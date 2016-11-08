@@ -106,6 +106,8 @@ HMBrowser.prototype.init = function() {
     this.colHeads.setWidth(this.width - vertScrollWidth);
     this.rowHeads.setHeight(this.height - horizScrollHeight);
 
+    var imgExportCanv = createCanvas('hmExportCanvas', this.width, this.numCols * this.settings.cellWidth, 'position: absolute; top: 0; left: 0; visibility: hidden;');
+    this.parentDiv.appendChild(imgExportCanv);
     var textOvrCanv = createCanvas('hmTextOverflowCover1', this.hmTL.left, this.hmTL.top, 'position: absolute; top: 0; left: 0;');
     this.parentDiv.appendChild(textOvrCanv);
     var textOvrCanv = createCanvas('hmTextOverflowCover2', this.hmTL.left, this.horizScroll.height, 'position: absolute; top: ' + (this.height - horizScrollHeight) + 'px; left: 0;');
@@ -261,8 +263,8 @@ HMBrowser.prototype.searchRows = function(query) {
     this.currSearchQuery = query;
     var indices = this.searchProvider.search(this.rowHeads.filteredRowHeaders, query);
     this.rowHeads.currSearchIndex = -1;
-    this.rowHeads.searchHighlightHeaders(indices);
-    this.heatmap.searchHighlightCellRanges(indices);
+    this.rowHeads.searchHighlightHeaders(this.rowHeads.searchHighlightCtx, indices);
+    this.heatmap.searchHighlightCellRanges(this.heatmap.searchHighlightCtx, indices);
 };
 
 HMBrowser.prototype.searchNext = function() {
@@ -352,6 +354,32 @@ HMBrowser.prototype.inVisibleArea = function(i, j) {
     var boxWin = { top: this.scrollY, left: this.scrollX, right: this.scrollX + this.width, bottom: this.scrollY + this.height };
     return  !(box.right < boxWin.left || box.left > boxWin.right || box.bottom < boxWin.top || box.top > boxWin.bottom);
 }
+
+HMBrowser.prototype.exportImage = function() {
+    var canvas = document.getElementById('hmExportCanvas');
+
+    // Check if image will be too large
+    // If the canvas is too large toDataURL will return: "data:,"
+    canvas.width = (this.colHeads.colHeaders.length * this.settings.cellWidth) + this.hmTL.left;
+    canvas.height = (this.rowHeads.filteredRowHeaders.length * this.settings.cellHeight) + this.hmTL.top;
+    var str = canvas.toDataURL();
+    if (str.length <= 6) {
+        return null;
+    }
+
+    var context = canvas.getContext('2d');
+
+    var rowHeadCanv = this.rowHeads.renderFull(this.rowHeads.width, canvas.height);
+    var colHeadCanv = this.colHeads.renderFull(canvas.width, this.colHeads.height);
+    var hmCanv = this.heatmap.renderFull((this.colHeads.colHeaders.length * this.settings.cellWidth), (this.rowHeads.filteredRowHeaders.length * this.settings.cellHeight));
+
+    // merge canvases to a single canvas
+    context.drawImage(rowHeadCanv,0,0);
+    context.drawImage(colHeadCanv,0,0);
+    context.drawImage(hmCanv,this.hmTL.left,this.hmTL.top);
+
+    return canvas.toDataURL();
+};
 
 HMBrowser.prototype.redraw = function() {
     this.colHeads.redraw();

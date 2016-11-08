@@ -49,6 +49,48 @@ HMColHeaders.prototype.inView = function(i) {
   return !( elem.right < view.left || elem.left > view.right );
 };
 
+HMColHeaders.prototype.renderFull = function(width, height) {
+    var cw = this.browser.settings.cellWidth * this.browser.zoom;
+    var fullCanv = createCanvas('hmRowHeadFullCanvas', width, height, '');
+    var ctx = fullCanv.getContext("2d");
+
+    if (this.approxHeaderWidth <= cw) {
+        // Somewhat hard to understand, but we have to esentially rotate the whole context/coord system
+        // for every label we are rendering in order to get rotated text
+        for(var i = 0; i < this.colHeaders.length; ++i) {
+            if (Array.isArray(this.colHeaders[i])) {
+                var currHeight = 0;
+                ctx.save();
+                ctx.translate(i*cw + (cw/2) + this.browser.hmTL.left - this.scrollX, this.headerHeights[0]/2);
+                ctx.rotate(this.browser.settings.colTextRotation);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.colHeaders[i][0], this.browser.settings.labelTextPadding/2, 0);
+                ctx.restore();
+                for(var j = 1; j < this.colHeaders[i].length; ++j) {
+                    currHeight += this.headerHeights[i][j-1];
+                    ctx.save();
+                    ctx.translate(i*cw + (cw/2) + this.browser.hmTL.left - this.scrollX, currHeight + (this.headerHeights[j]/2));
+                    ctx.rotate(this.browser.settings.colTextRotation);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.colHeaders[i][j], this.browser.settings.labelTextPadding/2, 0);
+                    ctx.restore();
+                }
+            } else {
+                ctx.save();
+                ctx.translate(i*cw + (cw/2) + this.browser.hmTL.left - this.scrollX, this.height/2);
+                ctx.rotate(this.browser.settings.colTextRotation);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.colHeaders[i], this.browser.settings.labelTextPadding/2, 0);
+                ctx.restore();
+            }
+        }
+    }
+    return fullCanv;
+};
+
 HMColHeaders.prototype.render = function() {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
 

@@ -152,27 +152,33 @@ HMHeatmap.prototype.indices2ranges = function(indices) {
     return ranges;
 };
 
-HMHeatmap.prototype.searchHighlightCellRanges = function(indices) {
+HMHeatmap.prototype.searchHighlightCellRanges = function(ctx, indices, clear) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    clear = clear != null ? clear : true;
+
+    ctx.strokeStyle = this.browser.settings.highlightSearchStroke;
+    ctx.globalAlpha = this.browser.settings.highlightSearchStrokeOpacity;
 
     this.highlightedSearchIndices = indices;
 
-    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+    if (clear) {
+        ctx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+    }
 
     var ranges = this.indices2ranges(indices);
     for (var i = 0; i < ranges.length; ++i) {
         var range = ranges[i];
 
-        this.searchHighlightCtx.beginPath();
-        this.searchHighlightCtx.moveTo(0, (ch*range.start)-this.scrollY);
-        this.searchHighlightCtx.lineTo(this.width, (ch*range.start)-this.scrollY);
-        this.searchHighlightCtx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, (ch*range.start)-this.scrollY);
+        ctx.lineTo(this.width, (ch*range.start)-this.scrollY);
+        ctx.stroke();
 
-        this.searchHighlightCtx.beginPath();
-        this.searchHighlightCtx.moveTo(0, (ch*(range.end+1))-this.scrollY);
-        this.searchHighlightCtx.lineTo(this.width, (ch*(range.end+1))-this.scrollY);
-        this.searchHighlightCtx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, (ch*(range.end+1))-this.scrollY);
+        ctx.lineTo(this.width, (ch*(range.end+1))-this.scrollY);
+        ctx.stroke();
     }
 };
 
@@ -222,6 +228,24 @@ HMHeatmap.prototype.onScrollY = function(scrollY) {
     this.redraw();
 };
 
+HMHeatmap.prototype.renderFull = function(width, height) {
+    var cw = this.browser.settings.cellWidth * this.browser.zoom;
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+
+    var fullCanv = createCanvas('hmHMFullCanvas', width, height, '');
+    var ctx = fullCanv.getContext("2d");
+
+    for(var i = 0; i < this.filteredData.length; ++i) {
+        for(var j = 0; j < this.numCols; ++j) {
+            ctx.fillStyle= this.browser.settings.getColorForHMVal(this.filteredData[i][j]);
+            ctx.fillRect((cw*j)-this.scrollX, (ch*i)-this.scrollY, cw, ch);
+        }
+    }
+    ctx.stroke();
+    this.searchHighlightCellRanges(ctx, this.highlightedSearchIndices, false);
+    return fullCanv;
+};
+
 HMHeatmap.prototype.render = function() {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
@@ -234,7 +258,7 @@ HMHeatmap.prototype.render = function() {
         }
     }
     this.ctx.stroke();
-    this.searchHighlightCellRanges(this.highlightedSearchIndices);
+    this.searchHighlightCellRanges(this.searchHighlightCtx, this.highlightedSearchIndices);
 };
 
 HMHeatmap.prototype.redraw = function() {

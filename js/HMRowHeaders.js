@@ -101,22 +101,54 @@ HMRowHeaders.prototype.inView = function(i) {
     return !( elem.bot < view.top || elem.top > view.bot );
 };
 
-HMRowHeaders.prototype.renderTitles = function() {
-    this.rowHeaderTitleCtx.textBaseline = 'bottom';
-    this.rowHeaderTitleCtx.textAlign = 'center';
+HMRowHeaders.prototype.renderTitles = function(ctx) {
+    ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold ' + this.browser.settings.rowTitleFontSizePt + 'pt ' + this.browser.settings.rowTitleFontFamily;
     var currWidth = 0;
     for(var i = 0; i < this.rowHeaderTitles.length; ++i) {
         if (this.browser.settings.hiddenRowHeaderInds[i]) continue;
-        this.rowHeaderTitleCtx.fillText(this.rowHeaderTitles[i], (currWidth) + (this.headerWidths[i]/2), this.browser.hmTL.top);
+        ctx.fillText(this.rowHeaderTitles[i], (currWidth) + (this.headerWidths[i]/2), this.browser.hmTL.top);
         currWidth += this.headerWidths[i];
     }
+};
+
+HMRowHeaders.prototype.renderFull = function(width, height) {
+    var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    var fullCanv = createCanvas('hmRowHeadFullCanvas', width, height, '');
+    var ctx = fullCanv.getContext("2d");
+
+    if (this.approxHeaderHeights <= ch) {
+        var currFont = ctx.font;
+        this.renderTitles(ctx);
+        ctx.font = currFont;
+        ctx.textBaseline = 'middle';
+        for(var i = 0; i < this.filteredRowHeaders.length; ++i) {
+            if (Array.isArray(this.filteredRowHeaders[0])) {
+                ctx.textAlign = 'center';
+                var currWidth = 0;
+                // Render the first col then loop through any remaining
+                ctx.fillText(this.filteredRowHeaders[i][0], this.browser.settings.labelTextPadding + (this.headerWidths[0]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                for(var j = 1; j < this.filteredRowHeaders[i].length; ++j) {
+                    if (this.browser.settings.hiddenRowHeaderInds[j]) continue;
+
+                    currWidth += this.headerWidths[j-1];
+                    ctx.fillText(this.filteredRowHeaders[i][j], (currWidth) + (this.headerWidths[j]/2), i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+                }
+            } else {
+                ctx.fillText(this.filteredRowHeaders[i], this.browser.settings.labelTextPadding, i*ch + (ch/2) + this.browser.hmTL.top - this.scrollY);
+            }
+        }
+    }
+    this.searchHighlightHeaders(ctx, this.highlightedSearchIndices, false);
+    return fullCanv;
 };
 
 HMRowHeaders.prototype.render = function() {
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
 
     if (this.approxHeaderHeights <= ch) {
-        this.renderTitles();
+        this.renderTitles(this.rowHeaderTitleCtx);
         this.rowHeaderCtx.textBaseline = 'middle';
         for(var i = 0; i < this.filteredRowHeaders.length; ++i) {
             if (!this.inView(i)) continue;
@@ -137,7 +169,7 @@ HMRowHeaders.prototype.render = function() {
             }
         }
     }
-    this.searchHighlightHeaders(this.highlightedSearchIndices);
+    this.searchHighlightHeaders(this.searchHighlightCtx, this.highlightedSearchIndices);
 };
 
 HMRowHeaders.prototype.highlightHeader = function(i, j) {
@@ -158,17 +190,23 @@ HMRowHeaders.prototype.highlightHeader = function(i, j) {
     this.highlightCtx.stroke();
 };
 
-HMRowHeaders.prototype.searchHighlightHeaders = function(indices) {
+HMRowHeaders.prototype.searchHighlightHeaders = function(ctx, indices, clear) {
     var cw = this.browser.settings.cellWidth * this.browser.zoom;
     var ch = this.browser.settings.cellHeight * this.browser.zoom;
+    clear = clear != null ? clear : true;
+
+    ctx.fillStyle = this.browser.settings.highlightSearchFill;
+    ctx.globalAlpha = this.browser.settings.highlightSearchOpacity;
 
     this.highlightedSearchIndices = (indices) ? indices : [];
 
-    this.searchHighlightCtx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+    if (clear) {
+        ctx.clearRect(0, 0, this.searchHighlightCanv.width, this.searchHighlightCanv.height);
+    }
 
     for (var i = 0; i < this.highlightedSearchIndices.length; ++i) {
         var idx = indices[i];
-        this.searchHighlightCtx.fillRect(0, (ch*idx) + this.browser.hmTL.top - this.scrollY, this.width, ch);
+        ctx.fillRect(0, (ch*idx) + this.browser.hmTL.top - this.scrollY, this.width, ch);
     }
 };
 

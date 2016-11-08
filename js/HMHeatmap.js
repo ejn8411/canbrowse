@@ -172,12 +172,12 @@ HMHeatmap.prototype.searchHighlightCellRanges = function(ctx, indices, clear) {
 
         ctx.beginPath();
         ctx.moveTo(0, (ch*range.start)-this.scrollY);
-        ctx.lineTo(this.width, (ch*range.start)-this.scrollY);
+        ctx.lineTo(ctx.canvas.width, (ch*range.start)-this.scrollY);
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(0, (ch*(range.end+1))-this.scrollY);
-        ctx.lineTo(this.width, (ch*(range.end+1))-this.scrollY);
+        ctx.lineTo(ctx.canvas.width, (ch*(range.end+1))-this.scrollY);
         ctx.stroke();
     }
 };

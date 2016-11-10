@@ -89,6 +89,14 @@ HMHorizScrollBar.prototype.onWheel = function(evt) {
     this.browser.onScrollX(this.scrollX);
 };
 
+HMHorizScrollBar.prototype.hideScroll = function() {
+    this.scrollXCanv.className += ' hidden';
+};
+
+HMHorizScrollBar.prototype.showScroll = function() {
+    this.scrollXCanv.className = this.scrollXCanv.className.replace( /(?:^|\s)hidden(?!\S)/g , '' );
+};
+
 HMHorizScrollBar.prototype.clear = function() {
     this.scrollXCtx.clearRect(0, 0, this.scrollXCanv.width, this.scrollXCanv.height);
 };

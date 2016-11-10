@@ -122,6 +122,14 @@ HMBrowser.prototype.init = function() {
     this.vertScroll.init();
     this.horizScroll.init();
 
+    if (!this.needsHorizScroll) {
+        this.horizScroll.hideScroll();
+    }
+
+    if (!this.needsVertScroll) {
+        this.vertScroll.hideScroll();
+    }
+
     window.onmousemove = function(e) {
         var evt = e || event;
         hmBr.vertScroll.onMouseMove(evt);
@@ -211,10 +219,16 @@ HMBrowser.prototype.onZoom = function() {
 
     if (!this.needsHorizScroll) {
         this.width = this.width + (this.needsVertScroll ? this.settings.vertScrollWidth : 0);
+        this.horizScroll.hideScroll();
+    } else {
+        this.horizScroll.showScroll();
     }
 
     if (!this.needsVertScroll) {
         this.height = this.height + (this.needsHorizScroll ? this.settings.horizScrollHeight : 0);
+        this.vertScroll.hideScroll();
+    } else {
+        this.vertScroll.showScroll();
     }
 
     var vertScrollWidth = this.needsVertScroll ? this.settings.vertScrollWidth : 0;

@@ -95,6 +95,14 @@ HMVertScrollBar.prototype.clear = function() {
     this.scrollYCtx.clearRect(0, 0, this.scrollYCanv.width, this.scrollYCanv.height);
 };
 
+HMVertScrollBar.prototype.hideScroll = function() {
+    this.scrollYCanv.className += ' hidden';
+};
+
+HMVertScrollBar.prototype.showScroll = function() {
+    this.scrollYCanv.className = this.scrollYCanv.className.replace( /(?:^|\s)hidden(?!\S)/g , '' );
+};
+
 HMVertScrollBar.prototype.redraw = function() {
     this.clear();
     this.render();

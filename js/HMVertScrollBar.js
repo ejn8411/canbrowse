@@ -19,12 +19,14 @@ HMVertScrollBar.prototype.init = function() {
     this.scrollYCtx = this.scrollYCanv.getContext("2d");
     this.scrollYCanv.onmousedown = function(e) {
         var evt = e || event;
+        evt.preventDefault();
         hmVertScroll.scrolling = true;
         hmVertScroll.startScrollY = hmVertScroll.scrollY;
         hmVertScroll.startScrollOff = evt.offsetY;
     };
     this.scrollYCanv.onmousemove = function(e) {
         var evt = e || event;
+        evt.preventDefault();
         if (hmVertScroll.onScroller(evt)) {
             if (hmVertScroll.scrollerFill !== hmVertScroll.scrollerHighlightFill) {
                 hmVertScroll.scrollerFill = hmVertScroll.scrollerHighlightFill;

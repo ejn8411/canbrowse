@@ -19,12 +19,14 @@ HMHorizScrollBar.prototype.init = function() {
     this.scrollXCtx = this.scrollXCanv.getContext("2d");
     this.scrollXCanv.onmousedown = function(e) {
         var evt = e || event;
+        evt.preventDefault();
         hmHorizScroll.scrolling = true;
         hmHorizScroll.startScrollX = hmHorizScroll.scrollX;
         hmHorizScroll.startScrollOff = evt.offsetX;
     };
     this.scrollXCanv.onmousemove = function(e) {
         var evt = e || event;
+        evt.preventDefault();
         if (hmHorizScroll.onScroller(evt)) {
             if (hmHorizScroll.scrollerFill !== hmHorizScroll.scrollerHighlightFill) {
                 hmHorizScroll.scrollerFill = hmHorizScroll.scrollerHighlightFill;
